@@ -1,0 +1,2002 @@
+     1→// ============================================
+     2→// API Client - Centralized API communication
+     3→// ============================================
+     4→
+     5→export interface User {
+     6→  id: string
+     7→  email: string
+     8→  name: string
+     9→  avatarUrl?: string | null
+    10→  role?: string
+    11→}
+    12→
+    13→export interface Organization {
+    14→  id: string
+    15→  name: string
+    16→  slug: string
+    17→  role: string
+    18→  currency?: string
+    19→  country?: string
+    20→  subscriptionPlan?: string
+    21→  subscriptionStatus?: string
+    22→  businessType?: string | null
+    23→  description?: string | null
+    24→  address?: string | null
+    25→  city?: string | null
+    26→  latitude?: number | null
+    27→  longitude?: number | null
+    28→  phone?: string | null
+    29→}
+    30→
+    31→export interface ProductType {
+    32→  id: string
+    33→  organizationId: string
+    34→  name: string
+    35→  icon?: string | null
+    36→  createdAt: string
+    37→  updatedAt: string
+    38→  attributes?: AttributeDefinition[]
+    39→  _count?: { products: number }
+    40→}
+    41→
+    42→export interface AttributeDefinition {
+    43→  id: string
+    44→  productTypeId: string
+    45→  name: string
+    46→  fieldType: string
+    47→  options?: string | null
+    48→  required: boolean
+    49→  order: number
+    50→}
+    51→
+    52→export interface Product {
+    53→  id: string
+    54→  productTypeId: string
+    55→  organizationId: string
+    56→  sku?: string | null
+    57→  name: string
+    58→  description?: string | null
+    59→  imageUrl?: string | null
+    60→  quantity: number
+    61→  costPrice: number
+    62→  sellingPrice: number
+    63→  lowStockThreshold: number
+    64→  isActive: boolean
+    65→  createdAt: string
+    66→  updatedAt: string
+    67→  productType?: { id: string; name: string; icon?: string | null }
+    68→  attributeValues?: ProductAttributeValue[]
+    69→}
+    70→
+    71→export interface ProductAttributeValue {
+    72→  id: string
+    73→  productId: string
+    74→  attributeDefinitionId: string
+    75→  value: string
+    76→  attributeDefinition?: { id: string; name: string; fieldType: string }
+    77→}
+    78→
+    79→export interface StockMovement {
+    80→  id: string
+    81→  organizationId: string
+    82→  productId: string
+    83→  type: string
+    84→  quantity: number
+    85→  previousStock: number
+    86→  newStock: number
+    87→  reason?: string | null
+    88→  reference?: string | null
+    89→  createdAt: string
+    90→  product?: { id: string; name: string; sku?: string | null }
+    91→}
+    92→
+    93→export interface Customer {
+    94→  id: string
+    95→  organizationId: string
+    96→  name: string
+    97→  email?: string | null
+    98→  phone?: string | null
+    99→  address?: string | null
+   100→  shopId?: string | null
+   101→  createdAt: string
+   102→  updatedAt: string
+   103→  _count?: { sales: number; debts: number }
+   104→}
+   105→
+   106→export interface Supplier {
+   107→  id: string
+   108→  organizationId: string
+   109→  name: string
+   110→  email?: string | null
+   111→  phone?: string | null
+   112→  address?: string | null
+   113→  shopId?: string | null
+   114→  createdAt: string
+   115→  updatedAt: string
+   116→}
+   117→
+   118→export interface Sale {
+   119→  id: string
+   120→  organizationId: string
+   121→  customerId?: string | null
+   122→  invoiceNumber: string
+   123→  status: string
+   124→  paymentMethod: string
+   125→  subtotal: number
+   126→  discount: number
+   127→  tax: number
+   128→  total: number
+   129→  amountPaid: number
+   130→  notes?: string | null
+   131→  saleDate: string
+   132→  createdAt: string
+   133→  updatedAt: string
+   134→  customer?: { id: string; name: string; phone?: string | null } | null
+   135→  items?: SaleItem[]
+   136→}
+   137→
+   138→export interface SaleItem {
+   139→  id: string
+   140→  saleId: string
+   141→  productId: string
+   142→  quantity: number
+   143→  unitPrice: number
+   144→  costPrice: number
+   145→  total: number
+   146→  product?: { id: string; name: string; sku?: string | null }
+   147→}
+   148→
+   149→export interface Debt {
+   150→  id: string
+   151→  organizationId: string
+   152→  customerId?: string | null
+   153→  supplierId?: string | null
+   154→  type: string
+   155→  amount: number
+   156→  paidAmount: number
+   157→  dueDate?: string | null
+   158→  status: string
+   159→  description?: string | null
+   160→  shopId?: string | null
+   161→  createdAt: string
+   162→  updatedAt: string
+   163→  customer?: { id: string; name: string; phone?: string | null } | null
+   164→  supplier?: { id: string; name: string; phone?: string | null } | null
+   165→  payments?: DebtPayment[]
+   166→}
+   167→
+   168→export interface DebtPayment {
+   169→  id: string
+   170→  debtId: string
+   171→  amount: number
+   172→  paymentMethod: string
+   173→  notes?: string | null
+   174→  paidAt: string
+   175→}
+   176→
+   177→export interface DashboardData {
+   178→  stats: {
+   179→    totalProducts: number
+   180→    outOfStockCount: number
+   181→    lowStockCount: number
+   182→    totalStockCostValue: number
+   183→    totalStockRetailValue: number
+   184→    todayRevenue: number
+   185→    todaySalesCount: number
+   186→    monthRevenue: number
+   187→    totalCustomerDebt: number
+   188→    periodRevenue: number
+   189→    periodExpenses: number
+   190→    periodCogs: number
+   191→    periodNetProfit: number
+   192→    periodSalesCount: number
+   193→  }
+   194→  comparison: {
+   195→    revenueChange: number
+   196→    expenseChange: number
+   197→    netProfitChange: number
+   198→    salesCountChange: number
+   199→    prevRevenue: number
+   200→    prevExpenses: number
+   201→    prevNetProfit: number
+   202→    prevSalesCount: number
+   203→  }
+   204→  period: {
+   205→    from: string
+   206→    to: string
+   207→    prevFrom: string
+   208→    prevTo: string
+   209→  }
+   210→  anomalies: Array<{
+   211→    id: string
+   212→    type: string
+   213→    message: string
+   214→    severity: string
+   215→  }>
+   216→  recentSales: Sale[]
+   217→  topProducts: Array<{
+   218→    id: string
+   219→    name: string
+   220→    sku?: string | null
+   221→    imageUrl?: string | null
+   222→    totalRevenue: number
+   223→    totalQuantity: number
+   224→  }>
+   225→  salesTrend: Array<{
+   226→    date: string
+   227→    revenue: number
+   228→  }>
+   229→}
+   230→
+   231→export interface InventoryStats {
+   232→  overview: {
+   233→    totalProducts: number
+   234→    outOfStock: number
+   235→    lowStock: number
+   236→    totalCostValue: number
+   237→    totalRetailValue: number
+   238→  }
+   239→  lowStockProducts: Array<{
+   240→    id: string
+   241→    name: string
+   242→    quantity: number
+   243→    costPrice: number
+   244→    sellingPrice: number
+   245→    lowStockThreshold: number
+   246→    productType: { id: string; name: string }
+   247→  }>
+   248→  recentMovements: StockMovement[]
+   249→}
+   250→
+   251→export interface Subscription {
+   252→  id: string
+   253→  organizationId: string
+   254→  subscriptionPlan: string
+   255→  subscriptionStatus: string
+   256→  subscriptionExpiresAt?: string | null
+   257→}
+   258→
+   259→export interface ServiceType {
+   260→  id: string
+   261→  organizationId: string
+   262→  name: string
+   263→  description?: string | null
+   264→  duration: number
+   265→  price: number
+   266→  imageUrl?: string | null
+   267→  isActive: boolean
+   268→  createdAt: string
+   269→  updatedAt: string
+   270→}
+   271→
+   272→export interface ServiceBooking {
+   273→  id: string
+   274→  organizationId: string
+   275→  serviceTypeId: string
+   276→  customerId?: string | null
+   277→  customerName: string
+   278→  customerPhone?: string | null
+   279→  status: string
+   280→  bookingDate: string
+   281→  startTime: string
+   282→  endTime: string
+   283→  notes?: string | null
+   284→  createdAt: string
+   285→  updatedAt: string
+   286→  serviceType?: { id: string; name: string; duration: number; price: number }
+   287→  customer?: { id: string; name: string; phone?: string | null } | null
+   288→}
+   289→
+   290→export interface Shop {
+   291→  id: string
+   292→  organizationId: string
+   293→  name: string
+   294→  address?: string | null
+   295→  city?: string | null
+   296→  latitude?: number | null
+   297→  longitude?: number | null
+   298→  phone?: string | null
+   299→  isActive: boolean
+   300→  memberCount?: number
+   301→}
+   302→
+   303→export interface ShopMemberData {
+   304→  id: string
+   305→  userId: string
+   306→  shopId: string
+   307→  role: string
+   308→  user: { id: string; name: string; email: string }
+   309→}
+   310→
+   311→export interface ModuleData {
+   312→  id: string
+   313→  key: string
+   314→  name: string
+   315→  description: string
+   316→  icon: string
+   317→  category: string
+   318→  priceETB: number
+   319→  isFree: boolean
+   320→  freeTrialDays: number
+   321→  billingCycle: string
+   322→  isActive: boolean  // Whether the org has it active
+   323→  order: number
+   324→  orgStatus?: {
+   325→    isActive: boolean
+   326→    status: string  // trial, active, expired, cancelled
+   327→    activatedAt: string | null
+   328→    expiresAt: string | null
+   329→    priceAtActivation: number
+   330→    autoRenew: boolean
+   331→  } | null
+   332→}
+   333→
+   334→export interface AdminDashboardData {
+   335→  totalOrganizations: number
+   336→  totalUsers: number
+   337→  totalShops: number
+   338→  totalRevenue: number
+   339→  totalProducts: number
+   340→  newShopsThisMonth: number
+   341→  activeSubscriptions: Record<string, number>
+   342→  organizationsByBusinessType: Record<string, number>
+   343→  revenueByMonth: Array<{ month: string; revenue: number }>
+   344→  topShopsByRevenue: Array<{ id: string; name: string; businessType: string; city: string | null; totalRevenue: number }>
+   345→  salesTeam?: {
+   346→    activeReps: number
+   347→    totalRegistrationsByReps: number
+   348→    registrationsThisMonth: number
+   349→  }
+   350→  regionInfo?: { id: string; name: string; slug: string } | null
+   351→  regionsBreakdown: Array<{ regionId: string; regionName: string; orgCount: number; revenue: number }>
+   352→}
+   353→
+   354→export interface ShopData {
+   355→  id: string
+   356→  name: string
+   357→  businessType: string
+   358→  city: string | null
+   359→  latitude: number | null
+   360→  longitude: number | null
+   361→  phone: string | null
+   362→  subscriptionPlan: string
+   363→  createdAt: string
+   364→  memberCount: number
+   365→  shopCount: number
+   366→  productTypeCount: number
+   367→  totalRevenue: number
+   368→}
+   369→
+   370→export interface MarketInsightsData {
+   371→  lowStockProducts: Array<{ orgName: string; productName: string; quantity: number; category: string }>
+   372→  fastMovingProducts: Array<{ name: string; orgName: string; category: string; quantitySold: number; revenue: number }>
+   373→  demandByCategory: Array<{ category: string; quantitySold: number; revenue: number }>
+   374→  supplyOpportunities: Array<{ productType: string; lowStockCount: number; orgNames: string[] }>
+   375→  topCities: Array<{ city: string | null; shopCount: number }>
+   376→  businessTypeDistribution: Array<{ businessType: string; count: number }>
+   377→  averageRevenueByType: Array<{ businessType: string; averageRevenue: number; totalRevenue: number; organizationCount: number }>
+   378→}
+   379→
+   380→export interface ShopMemberInfo {
+   381→  shopRole: string | null
+   382→  currentShopId: string | null
+   383→  shops: Array<{
+   384→    shopId: string
+   385→    shopName: string
+   386→    role: string
+   387→  }>
+   388→}
+   389→
+   390→export interface RegionData {
+   391→  id: string
+   392→  name: string
+   393→  slug: string
+   394→  country: string
+   395→  latitude: number | null
+   396→  longitude: number | null
+   397→  population: number | null
+   398→  description: string | null
+   399→  isActive: boolean
+   400→  order: number
+   401→  createdAt: string
+   402→  updatedAt: string
+   403→  // Stats (when includeStats=true)
+   404→  orgCount?: number
+   405→  userCount?: number
+   406→  shopCount?: number
+   407→  revenue?: number
+   408→  recentOrgs?: Array<{ id: string; name: string; businessType: string; city: string | null }>
+   409→}
+   410→
+   411→export interface RegionDetailData extends RegionData {
+   412→  organizations: Array<{
+   413→    id: string
+   414→    name: string
+   415→    businessType: string
+   416→    city: string | null
+   417→    subscriptionPlan: string
+   418→    memberCount: number
+   419→    shopCount: number
+   420→    revenue: number
+   421→  }>
+   422→  salesReps: Array<{
+   423→    id: string
+   424→    name: string
+   425→    email: string
+   426→    commissionRate: number
+   427→    registrations: number
+   428→  }>
+   429→}
+   430→
+   431→export interface Pagination {
+   432→  page: number
+   433→  limit: number
+   434→  total: number
+   435→  totalPages: number
+   436→}
+   437→
+   438→// ============================================
+   439→// Sales Team Types
+   440→// ============================================
+   441→
+   442→export interface SalesRep {
+   443→  id: string
+   444→  userId: string
+   445→  phone: string | null
+   446→  targetCity: string | null
+   447→  commissionRate: number
+   448→  commissionPerReg: number
+   449→  isActive: boolean
+   450→  joinedAt: string
+   451→  createdAt: string
+   452→  updatedAt: string
+   453→  user: { id: string; name: string; email: string; role: string }
+   454→  totalRegistrations: number
+   455→  currentGoal: SalesRepGoal | null
+   456→  commissions: {
+   457→    total: number
+   458→    pending: number
+   459→    paid: number
+   460→  }
+   461→}
+   462→
+   463→export interface SalesRepGoal {
+   464→  id: string
+   465→  period: string
+   466→  targetCount: number
+   467→  achievedCount: number
+   468→  progressPercentage: number
+   469→  bonusAmount: number
+   470→  isAchieved: boolean
+   471→}
+   472→
+   473→export interface Commission {
+   474→  id: string
+   475→  salesRepId: string
+   476→  organizationId: string
+   477→  amount: number
+   478→  status: string
+   479→  paidAt: string | null
+   480→  createdAt: string
+   481→  updatedAt: string
+   482→  organization: {
+   483→    id: string
+   484→    name: string
+   485→    city: string | null
+   486→    businessType: string
+   487→  }
+   488→}
+   489→
+   490→export interface TeamOverview {
+   491→  overview: {
+   492→    totalActiveReps: number
+   493→    totalInactiveReps: number
+   494→    totalReps: number
+   495→    currentMonthRegistrations: number
+   496→    totalCommissionsPaidThisMonth: number
+   497→  }
+   498→  teamGoal: {
+   499→    totalTarget: number
+   500→    totalAchieved: number
+   501→    progressPercentage: number
+   502→    totalBonusPool: number
+   503→    goalsAchieved: number
+   504→    totalGoals: number
+   505→  }
+   506→  topPerformingReps: Array<{
+   507→    id: string
+   508→    userId: string
+   509→    name: string
+   510→    email: string
+   511→    totalRegistrations: number
+   512→    currentMonthRegistrations: number
+   513→  }>
+   514→  goalsByRep: Array<{
+   515→    salesRepId: string
+   516→    repName: string
+   517→    repEmail: string
+   518→    targetCount: number
+   519→    achievedCount: number
+   520→    progressPercentage: number
+   521→    bonusAmount: number
+   522→    isAchieved: boolean
+   523→  }>
+   524→}
+   525→
+   526→// ============================================
+   527→// System Health (Traffic Optimization Patterns)
+   528→// ============================================
+   529→
+   530→export interface SystemHealthData {
+   531→  status: 'healthy' | 'degraded' | 'error'
+   532→  timestamp: string
+   533→  uptime: {
+   534→    seconds: number
+   535→    formatted: string
+   536→  }
+   537→  database: {
+   538→    status: 'connected' | 'error'
+   539→    latencyMs: number
+   540→  }
+   541→  cache: {
+   542→    namespaces: number
+   543→    totalEntries: number
+   544→    hitRate: string
+   545→    details: Record<string, number>
+   546→  }
+   547→  rateLimit: {
+   548→    activeBuckets: number
+   549→    details: Record<string, number>
+   550→  }
+   551→  resilience: {
+   552→    circuits: Record<string, { state: 'closed' | 'open' | 'half-open'; failureCount: number }>
+   553→    bulkheads: Record<string, { active: number; queued: number }>
+   554→  }
+   555→  memory: {
+   556→    heapUsedMB: number
+   557→    heapTotalMB: number
+   558→    rssMB: number
+   559→    externalMB: number
+   560→  }
+   561→  patterns: {
+   562→    applied: string[]
+   563→    cacheNamespaces: string[]
+   564→  }
+   565→  error?: string
+   566→}
+   567→
+   568→export interface Expense {
+   569→  id: string
+   570→  organizationId: string
+   571→  shopId?: string | null
+   572→  category: string
+   573→  amount: number
+   574→  description?: string | null
+   575→  expenseDate: string
+   576→  isRecurring: boolean
+   577→  recurringPeriod?: string | null
+   578→  createdAt: string
+   579→  updatedAt: string
+   580→  shop?: { id: string; name: string } | null
+   581→}
+   582→
+   583→class ApiClient {
+   584→  // Supabase Auth uses httpOnly cookies for session management.
+   585→  // The token is no longer stored in localStorage for security.
+   586→  // We keep a reference for backward compat but auth is primarily cookie-based.
+   587→  private _token: string | null = null
+   588→  // Guard flag: when true, 401 auto-logout is suppressed to prevent
+   589→  // stale background requests from interfering with an active login attempt.
+   590→  private _isLoggingIn: boolean = false
+   591→
+   592→  // Flag to suppress 401 auto-logout during bootstrap
+   593→  // When true, 401 responses don't trigger logout (used during initial data hydration)
+   594→  private _suppressAuthLogout: boolean = false
+   595→
+   596→  // Request deduplication: prevent concurrent identical GET requests
+   597→  // If 3 components request the same endpoint simultaneously, only 1 fetch is made.
+   598→  private _inflightRequests = new Map<string, Promise<unknown>>()
+   599→
+   600→  // Short-lived client-side response cache for GET requests (5s TTL)
+   601→  // Prevents rapid re-fetches when multiple components mount simultaneously
+   602→  private _responseCache = new Map<string, { data: unknown; expiresAt: number }>()
+   603→  private static RESPONSE_CACHE_TTL = 5_000 // 5 seconds
+   604→
+   605→  /**
+   606→   * Invalidate client-side response cache entries matching a prefix.
+   607→   * Called after mutating operations to ensure stale data is not served.
+   608→   */
+   609→  invalidateCache(prefix: string): void {
+   610→    // Invalidate our internal response cache
+   611→    this._responseCache.forEach((_, key) => {
+   612→      if (key.startsWith(prefix)) {
+   613→        this._responseCache.delete(key)
+   614→      }
+   615→    })
+   616→    // Also invalidate the shared client-cache (used by swrFetch)
+   617→    try {
+   618→      import('@/lib/client-cache').then(({ invalidateKeysByPrefix }) => {
+   619→        invalidateKeysByPrefix(prefix)
+   620→      }).catch(() => {
+   621→        // client-cache may not be available during SSR
+   622→      })
+   623→    } catch {
+   624→      // client-cache may not be available during SSR
+   625→    }
+   626→  }
+   627→
+   628→  /**
+   629→   * Suppress 401 auto-logout during bootstrap or other batch operations.
+   630→   * When active, 401 responses are thrown as errors but don't clear the token
+   631→   * or trigger logout. Call endBatchOperation() when done.
+   632→   */
+   633→  beginBatchOperation(): void {
+   634→    this._suppressAuthLogout = true
+   635→  }
+   636→
+   637→  /**
+   638→   * Re-enable 401 auto-logout after a batch operation completes.
+   639→   */
+   640→  endBatchOperation(): void {
+   641→    this._suppressAuthLogout = false
+   642→  }
+   643→
+   644→  private getToken(): string | null {
+   645→    if (typeof window === 'undefined') return null
+   646→    // Check memory first, then fallback to localStorage (for migration)
+   647→    return this._token || localStorage.getItem('sb_token')
+   648→  }
+   649→
+   650→  setToken(token: string): void {
+   651→    if (typeof window === 'undefined') return
+   652→    this._token = token
+   653→    // Also keep in localStorage for migration period
+   654→    localStorage.setItem('sb_token', token)
+   655→  }
+   656→
+   657→  clearToken(): void {
+   658→    if (typeof window === 'undefined') return
+   659→    this._token = null
+   660→    localStorage.removeItem('sb_token')
+   661→  }
+   662→
+   663→  private async request<T>(
+   664→    endpoint: string,
+   665→    options: RequestInit = {}
+   666→  ): Promise<T> {
+   667→    const token = this.getToken()
+   668→    const headers: Record<string, string> = {
+   669→      'Content-Type': 'application/json',
+   670→      ...(options.headers as Record<string, string>),
+   671→    }
+   672→
+   673→    // Add JWT token to Authorization header if available
+   674→    if (token) {
+   675→      headers['Authorization'] = `Bearer ${token}`
+   676→    }
+   677→
+   678→    // Offline interceptor: queue mutating requests, reject GET requests
+   679→    const method = (options.method || 'GET').toUpperCase()
+   680→    const isMutating = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)
+   681→    const isGet = method === 'GET'
+   682→
+   683→    // ---- Request deduplication for GET requests ----
+   684→    // If an identical GET request is already in-flight, return the same promise
+   685→    // instead of firing a duplicate network request.
+   686→    if (isGet) {
+   687→      const cacheKey = `${method}:${endpoint}`
+   688→
+   689→      // Check short-lived response cache first
+   690→      const cached = this._responseCache.get(cacheKey)
+   691→      if (cached && Date.now() < cached.expiresAt) {
+   692→        return cached.data as T
+   693→      }
+   694→
+   695→      // Check for in-flight deduplication
+   696→      const inflight = this._inflightRequests.get(cacheKey)
+   697→      if (inflight) {
+   698→        return inflight as Promise<T>
+   699→      }
+   700→
+   701→      // ---- Offline check: return persistent cache or entity-table fallback ----
+   702→      if (typeof window !== 'undefined' && !navigator.onLine) {
+   703→        // Try persistent IndexedDB cache first
+   704→        try {
+   705→          const { getCachedApiResponse } = await import('@/lib/db')
+   706→          const persistentCached = await getCachedApiResponse<T>(cacheKey)
+   707→          if (persistentCached !== null) {
+   708→            console.log(`[ApiClient] Offline — returning persistent cached data for ${cacheKey}`)
+   709→            return persistentCached
+   710→          }
+   711→        } catch (err) {
+   712→          console.warn('[ApiClient] Failed to read from persistent cache:', err)
+   713→        }
+   714→
+   715→        // Fallback: reconstruct response from IndexedDB entity tables
+   716→        try {
+   717→          const { getOfflineFallback } = await import('@/lib/sync/offline-fallback')
+   718→          const offlineData = await getOfflineFallback<T>(endpoint)
+   719→          if (offlineData !== null) {
+   720→            return offlineData
+   721→          }
+   722→        } catch (err) {
+   723→          console.warn('[ApiClient] Offline entity fallback failed:', err)
+   724→        }
+   725→
+   726→        // For GET requests with no cache and no entity data: throw with a helpful message
+   727→        throw new Error('You are offline and no cached data is available for this request. Please connect to the internet.')
+   728→      }
+   729→    }
+   730→
+   731→    // Offline handling for non-GET (mutating) requests
+   732→    // GET requests are already handled above in the isGet block
+   733→    if (typeof window !== 'undefined' && !navigator.onLine && isMutating) {
+   734→      try {
+   735→        const { queueOperation } = await import('@/lib/offline-queue')
+   736→        await queueOperation(
+   737→          endpoint,
+   738→          method,
+   739→          headers,
+   740→          options.body ? String(options.body) : null
+   741→        )
+   742→        // Return a mock "offline queued" response so callers don't break
+   743→        return { offline: true, queued: true } as unknown as T
+   744→      } catch {
+   745→        // If queuing fails, fall through to throw error
+   746→      }
+   747→      throw new Error('You are offline. Please check your internet connection and try again.')
+   748→    }
+   749→
+   750→    // Add timeout (30s) to prevent hanging requests
+   751→    const controller = new AbortController()
+   752→    const timeoutId = setTimeout(() => controller.abort(), 30000)
+   753→    const signal = options.signal || controller.signal
+   754→
+   755→    // For GET requests, register the inflight promise for deduplication
+   756→    const cacheKey = `${method}:${endpoint}`
+   757→    let isInflightRegistered = false
+   758→
+   759→    if (isGet) {
+   760→      isInflightRegistered = true
+   761→    }
+   762→
+   763→    // Create the fetch promise (may be shared across callers)
+   764→    const fetchPromise = (async () => {
+   765→      let response: Response
+   766→      try {
+   767→        response = await fetch(endpoint, {
+   768→          ...options,
+   769→          headers,
+   770→          signal,
+   771→        })
+   772→      } catch (err) {
+   773→        clearTimeout(timeoutId)
+   774→        // Clean up inflight registration
+   775→        if (isInflightRegistered) {
+   776→          this._inflightRequests.delete(cacheKey)
+   777→        }
+   778→        // If we got a network error during a mutating request, try to queue it
+   779→        if (err instanceof TypeError && err.message === 'Failed to fetch' && isMutating) {
+   780→          try {
+   781→            const { queueOperation } = await import('@/lib/offline-queue')
+   782→            await queueOperation(
+   783→              endpoint,
+   784→              method,
+   785→              headers,
+   786→              options.body ? String(options.body) : null
+   787→            )
+   788→            return { offline: true, queued: true } as unknown as T
+   789→          } catch {
+   790→            // Fall through to original error handling
+   791→          }
+   792→        }
+   793→        if (err instanceof DOMException && err.name === 'AbortError') {
+   794→          throw new Error('Request timed out — the server took too long to respond. Please try again.')
+   795→        }
+   796→        if (err instanceof TypeError && err.message === 'Failed to fetch') {
+   797→          // For GET requests, try persistent cache then entity-table fallback
+   798→          if (isGet) {
+   799→            try {
+   800→              const { getCachedApiResponse } = await import('@/lib/db')
+   801→              const cached = await getCachedApiResponse<T>(cacheKey)
+   802→              if (cached !== null) {
+   803→                console.log(`[ApiClient] Network error — returning cached data for ${cacheKey}`)
+   804→                return cached
+   805→              }
+   806→            } catch {
+   807→              // Fall through to entity fallback
+   808→            }
+   809→            // Fallback: reconstruct from entity tables
+   810→            try {
+   811→              const { getOfflineFallback } = await import('@/lib/sync/offline-fallback')
+   812→              const offlineData = await getOfflineFallback<T>(endpoint)
+   813→              if (offlineData !== null) {
+   814→                return offlineData
+   815→              }
+   816→            } catch {
+   817→              // Fall through to error
+   818→            }
+   819→          }
+   820→          throw new Error('Network error — please check your internet connection and try again.')
+   821→        }
+   822→        throw new Error(err instanceof Error ? err.message : 'An unexpected network error occurred')
+   823→      }
+   824→
+   825→      clearTimeout(timeoutId)
+   826→
+   827→      // Handle non-JSON responses gracefully
+   828→      let data: Record<string, unknown>
+   829→      try {
+   830→        data = await response.json() as Record<string, unknown>
+   831→      } catch {
+   832→        // Clean up inflight registration on parse error
+   833→        if (isInflightRegistered) {
+   834→          this._inflightRequests.delete(cacheKey)
+   835→        }
+   836→        if (!response.ok) {
+   837→          // Map common HTTP error codes to user-friendly messages — never expose raw status codes
+   838→          if (response.status === 401) throw new Error('Your session has expired. Please log in again.')
+   839→          if (response.status === 403) throw new Error('You do not have permission to perform this action')
+   840→          if (response.status === 404) throw new Error('The requested resource was not found')
+   841→          if (response.status === 429) throw new Error('Too many requests — please wait a moment and try again')
+   842→          if (response.status >= 500) throw new Error('Server error — please try again later')
+   843→          throw new Error('An unexpected error occurred. Please try again.')
+   844→        }
+   845→        throw new Error('Server returned an invalid response')
+   846→      }
+   847→
+   848→      // Clean up inflight registration after response is parsed
+   849→      if (isInflightRegistered) {
+   850→        this._inflightRequests.delete(cacheKey)
+   851→      }
+   852→
+   853→      if (!response.ok) {
+   854→        const errorMessage = (data.error as string) || (data.message as string) || 'An unexpected error occurred. Please try again.'
+   855→        const errorCode = data.code as string | undefined
+   856→
+   857→        // Handle database unreachable errors
+   858→        if (response.status === 503 && errorCode === 'DB_UNREACHABLE') {
+   859→          const dbError = new Error('Database is unreachable') as Error & { code: string }
+   860→          dbError.code = 'DB_UNREACHABLE'
+   861→          throw dbError
+   862→        }
+   863→
+   864→        // ----------------------------------------------------------------
+   865→        // Service Worker offline response handling.
+   866→        //
+   867→        // When the app is offline and the service worker intercepts an API
+   868→        // GET request that isn't in its cache, the SW returns a 503 with
+   869→        // { error: 'You are offline', offline: true } (see public/sw.js ->
+   870→        // networkFirstWithCache). This is a *real* Response object, so the
+   871→        // fetch() does NOT throw a TypeError — which means the offline
+   872→        // fallback paths above (navigator.onLine check) and below
+   873→        // (TypeError 'Failed to fetch' check) never run.
+   874→        //
+   875→        // This is especially fatal for /api/auth/me on a fresh page reload
+   876→        // while offline: the SW never cached /api/auth/me (it's only ever
+   877→        // called before the SW takes control, or on a reload that is itself
+   878→        // offline), so the SW returns 503, the api-client throws, and
+   879→        // checkAuth() can't restore the session — leaving the app stuck on
+   880→        // the "Loading InvenSync..." screen.
+   881→        //
+   882→        // Fix: treat the SW's offline 503 exactly like a network failure and
+   883→        // route it through the persistent cache + entity-table fallback. For
+   884→        // /api/auth/me this reconstructs the user profile from IndexedDB
+   885→        // (db.userProfile), letting checkAuth succeed offline.
+   886→        // ----------------------------------------------------------------
+   887→        if (isGet && (data.offline === true || (response.status === 503 && errorCode !== 'DB_UNREACHABLE'))) {
+   888→          // Try persistent IndexedDB cache first
+   889→          try {
+   890→            const { getCachedApiResponse } = await import('@/lib/db')
+   891→            const cached = await getCachedApiResponse<T>(cacheKey)
+   892→            if (cached !== null) {
+   893→              console.log(`[ApiClient] SW offline response — returning cached data for ${cacheKey}`)
+   894→              return cached
+   895→            }
+   896→          } catch {
+   897→            // Fall through to entity-table fallback
+   898→          }
+   899→          // Fallback: reconstruct from IndexedDB entity tables
+   900→          try {
+   901→            const { getOfflineFallback } = await import('@/lib/sync/offline-fallback')
+   902→            const offlineData = await getOfflineFallback<T>(endpoint)
+   903→            if (offlineData !== null) {
+   904→              console.log(`[ApiClient] SW offline response — reconstructed from entity tables for ${endpoint}`)
+   905→              return offlineData
+   906→            }
+   907→          } catch {
+   908→            // Fall through to error
+   909→          }
+   910→          // No cached or entity data available — throw a network-style error
+   911→          // so callers (e.g. checkAuth) can apply their own offline handling.
+   912→          throw new Error('You are offline and no cached data is available for this request. Please connect to the internet.')
+   913→        }
+   914→
+   915→        // For 401/403 on non-auth endpoints, try offline fallback from IndexedDB
+   916→        // before throwing. This handles cases where the server is unreachable
+   917→        // but returns auth errors, or where the user is working offline.
+   918→        if (isGet && (response.status === 401 || response.status === 403) && !endpoint.startsWith('/api/auth/')) {
+   919→          try {
+   920→            const { getOfflineFallback } = await import('@/lib/sync/offline-fallback')
+   921→            const offlineData = await getOfflineFallback<T>(endpoint)
+   922→            if (offlineData !== null) {
+   923→              console.log(`[ApiClient] ${response.status} on ${endpoint} — falling back to offline data`)
+   924→              return offlineData
+   925→            }
+   926→          } catch {
+   927→            // Fall through to normal error handling
+   928→          }
+   929→          // Also try the persistent API cache
+   930→          try {
+   931→            const { getCachedApiResponse } = await import('@/lib/db')
+   932→            const cached = await getCachedApiResponse<T>(cacheKey)
+   933→            if (cached !== null) {
+   934→              console.log(`[ApiClient] ${response.status} on ${endpoint} — returning cached data`)
+   935→              return cached
+   936→            }
+   937→          } catch {
+   938→            // Fall through to normal error handling
+   939→          }
+   940→        }
+   941→
+   942→        // Handle auth errors — only auto-logout when the session-check endpoint
+   943→        // returns 401, not every API endpoint. Other endpoints may return 401
+   944→        // for reasons other than expired sessions (e.g., module access, rate limits,
+   945→        // race conditions during bootstrap). The /api/auth/me endpoint is the
+   946→        // authoritative source for session validity.
+   947→        const isSessionCheckEndpoint = endpoint.startsWith('/api/auth/me')
+   948→        if (response.status === 401 && token && isSessionCheckEndpoint && !this._isLoggingIn) {
+   949→          // Only clear token and trigger logout if the token we sent is STILL the current token.
+   950→          // This prevents a stale background request from clearing a freshly-set token
+   951→          // after the user logged out and logged back in.
+   952→          const currentToken = this.getToken()
+   953→          if (token === currentToken) {
+   954→            this.clearToken()
+   955→            // Trigger logout via auth store to update UI state
+   956→            try {
+   957→              const { useAuthStore } = await import('@/lib/stores/auth-store')
+   958→              const store = useAuthStore.getState()
+   959→              if (store.isAuthenticated) {
+   960→                // Use setTimeout to avoid race conditions with concurrent requests.
+   961→                // If multiple 401s come in at the same time, only the first one will
+   962→                // trigger logout (subsequent ones will see isAuthenticated = false).
+   963→                setTimeout(() => {
+   964→                  const currentStore = useAuthStore.getState()
+   965→                  if (currentStore.isAuthenticated) {
+   966→                    currentStore.logout()
+   967→                  }
+   968→                }, 100)
+   969→              }
+   970→            } catch {
+   971→              // If import fails (e.g. during SSR), just clear the token
+   972→            }
+   973→          }
+   974→          throw new Error('Your session has expired. Please log in again.')
+   975→        }
+   976→
+   977→        throw new Error(errorMessage)
+   978→      }
+   979→
+   980→      // Cache successful GET responses for short TTL (in-memory)
+   981→      if (isGet) {
+   982→        this._responseCache.set(cacheKey, {
+   983→          data: data as T,
+   984→          expiresAt: Date.now() + ApiClient.RESPONSE_CACHE_TTL,
+   985→        })
+   986→        // Also persist to IndexedDB for offline fallback (fire-and-forget)
+   987→        try {
+   988→          const { cacheApiResponse } = await import('@/lib/db')
+   989→          cacheApiResponse(cacheKey, data as T).catch(() => {})
+   990→        } catch {
+   991→          // Import may fail during SSR
+   992→        }
+   993→      }
+   994→
+   995→      return data as T
+   996→    })()
+   997→
+   998→    // Register the inflight promise for GET deduplication
+   999→    if (isGet) {
+  1000→      this._inflightRequests.set(cacheKey, fetchPromise)
+  1001→    }
+  1002→
+  1003→    return fetchPromise
+  1004→  }
+  1005→
+  1006→  // ============================================
+  1007→  // Auth
+  1008→  // ============================================
+  1009→
+  1010→  async login(email: string, password: string): Promise<{
+  1011→    token: string
+  1012→    user: User
+  1013→    organizations: Organization[]
+  1014→  }> {
+  1015→    // Clear any stale token before login to prevent sending old Authorization header
+  1016→    this.clearToken()
+  1017→    // Set guard flag to prevent stale 401 responses from triggering auto-logout
+  1018→    // during the login process
+  1019→    this._isLoggingIn = true
+  1020→    try {
+  1021→      const data = await this.request('/api/auth/login', {
+  1022→        method: 'POST',
+  1023→        body: JSON.stringify({ email, password }),
+  1024→      })
+  1025→      if (data.token) {
+  1026→        this.setToken(data.token)
+  1027→      }
+  1028→      return data
+  1029→    } finally {
+  1030→      // Always reset the guard flag, even if login fails
+  1031→      this._isLoggingIn = false
+  1032→    }
+  1033→  }
+  1034→
+  1035→  async register(name: string, email: string, password: string, orgName: string, extra?: {
+  1036→    businessType?: string
+  1037→    description?: string
+  1038→    address?: string
+  1039→    city?: string
+  1040→    latitude?: number
+  1041→    longitude?: number
+  1042→    phone?: string
+  1043→    referralCode?: string
+  1044→  }): Promise<{
+  1045→    token: string
+  1046→    user: User
+  1047→    organization: Organization
+  1048→  }> {
+  1049→    // Clear any stale token before register to prevent sending old Authorization header
+  1050→    this.clearToken()
+  1051→    this._isLoggingIn = true
+  1052→    try {
+  1053→      const data = await this.request('/api/auth/register', {
+  1054→        method: 'POST',
+  1055→        body: JSON.stringify({ name, email, password, organizationName: orgName, ...extra }),
+  1056→      })
+  1057→      if (data.token) {
+  1058→        this.setToken(data.token)
+  1059→      }
+  1060→      return data
+  1061→    } finally {
+  1062→      this._isLoggingIn = false
+  1063→    }
+  1064→  }
+  1065→
+  1066→  async getMe(): Promise<{
+  1067→    user: User
+  1068→    organizations: Organization[]
+  1069→  }> {
+  1070→    return this.request('/api/auth/me')
+  1071→  }
+  1072→
+  1073→  async resetPassword(email: string, currentPassword: string, newPassword: string): Promise<{
+  1074→    message: string
+  1075→  }> {
+  1076→    return this.request('/api/auth/reset-password', {
+  1077→      method: 'POST',
+  1078→      body: JSON.stringify({ email, currentPassword, newPassword }),
+  1079→    })
+  1080→  }
+  1081→
+  1082→  // ============================================
+  1083→  // Two-Factor Authentication (2FA)
+  1084→  // ============================================
+  1085→
+  1086→  async setup2fa(userId: string): Promise<{
+  1087→    qrCodeUrl: string
+  1088→    backupCodes: string[]
+  1089→    secret: string
+  1090→  }> {
+  1091→    return this.request('/api/auth/2fa/setup', {
+  1092→      method: 'POST',
+  1093→      body: JSON.stringify({ userId }),
+  1094→    })
+  1095→  }
+  1096→
+  1097→  async verify2faSetup(userId: string, code: string): Promise<{
+  1098→    success: boolean
+  1099→    message: string
+  1100→  }> {
+  1101→    return this.request('/api/auth/2fa/verify', {
+  1102→      method: 'POST',
+  1103→      body: JSON.stringify({ userId, code }),
+  1104→    })
+  1105→  }
+  1106→
+  1107→  async disable2fa(userId: string, code: string): Promise<{
+  1108→    success: boolean
+  1109→    message: string
+  1110→  }> {
+  1111→    return this.request('/api/auth/2fa/disable', {
+  1112→      method: 'POST',
+  1113→      body: JSON.stringify({ userId, code }),
+  1114→    })
+  1115→  }
+  1116→
+  1117→  async verify2faLogin(tempToken: string, code: string): Promise<{
+  1118→    token: string
+  1119→    user: User
+  1120→    organizations: Organization[]
+  1121→  }> {
+  1122→    // Clear any stale token before 2FA verification
+  1123→    this.clearToken()
+  1124→    this._isLoggingIn = true
+  1125→    try {
+  1126→      const data = await this.request('/api/auth/login/2fa', {
+  1127→        method: 'POST',
+  1128→        body: JSON.stringify({ tempToken, code }),
+  1129→      })
+  1130→      if (data.token) {
+  1131→        this.setToken(data.token)
+  1132→      }
+  1133→      return data
+  1134→    } finally {
+  1135→      this._isLoggingIn = false
+  1136→    }
+  1137→  }
+  1138→
+  1139→  // ============================================
+  1140→  // Session Management
+  1141→  // ============================================
+  1142→
+  1143→  async getSessions(): Promise<{
+  1144→    sessions: Array<{
+  1145→      id: string
+  1146→      deviceName: string | null
+  1147→      deviceType: string | null
+  1148→      browser: string | null
+  1149→      os: string | null
+  1150→      ipAddress: string | null
+  1151→      lastActiveAt: string
+  1152→      isActive: boolean
+  1153→      isCurrent: boolean
+  1154→      createdAt: string
+  1155→    }>
+  1156→  }> {
+  1157→    return this.request('/api/auth/sessions')
+  1158→  }
+  1159→
+  1160→  async revokeSession(sessionId: string): Promise<{ success: boolean }> {
+  1161→    return this.request(`/api/auth/sessions/${sessionId}`, {
+  1162→      method: 'DELETE',
+  1163→    })
+  1164→  }
+  1165→
+  1166→  async revokeAllSessions(): Promise<{ success: boolean; message: string }> {
+  1167→    return this.request('/api/auth/sessions/revoke-all', {
+  1168→      method: 'POST',
+  1169→    })
+  1170→  }
+  1171→
+  1172→  // ============================================
+  1173→  // Organizations
+  1174→  // ============================================
+  1175→
+  1176→  async getOrganizations(): Promise<{ organizations: Organization[] }> {
+  1177→    return this.request('/api/organizations')
+  1178→  }
+  1179→
+  1180→  async getOrganization(id: string): Promise<{
+  1181→    organization: Organization & {
+  1182→      members: Array<{
+  1183→        id: string
+  1184→        userId: string
+  1185→        role: string
+  1186→        user: { id: string; name: string; email: string }
+  1187→      }>
+  1188→    }
+  1189→  }> {
+  1190→    return this.request(`/api/organizations/${id}`)
+  1191→  }
+  1192→
+  1193→  // ============================================
+  1194→  // Shop Members
+  1195→  // ============================================
+  1196→
+  1197→  async getShopMemberInfo(orgId: string): Promise<ShopMemberInfo> {
+  1198→    return this.request(`/api/shop-members?orgId=${orgId}`)
+  1199→  }
+  1200→
+  1201→  // ============================================
+  1202→  // Business Type
+  1203→  // ============================================
+  1204→
+  1205→  async updateBusinessType(orgId: string, businessType: string): Promise<{
+  1206→    success: boolean
+  1207→    businessType: string
+  1208→    seeded: boolean
+  1209→    productTypeCount: number
+  1210→    attributeCount: number
+  1211→  }> {
+  1212→    const result = await this.request('/api/organizations/business-type', {
+  1213→      method: 'POST',
+  1214→      body: JSON.stringify({ orgId, businessType }),
+  1215→    })
+  1216→    this.invalidateCache('GET:/api/auth/me')
+  1217→    this.invalidateCache('GET:/api/product-types')
+  1218→    return result
+  1219→  }
+  1220→
+  1221→  // ============================================
+  1222→  // Product Types
+  1223→  // ============================================
+  1224→
+  1225→  async getProductTypes(orgId: string, shopId?: string): Promise<{ productTypes: ProductType[] }> {
+  1226→    const params = new URLSearchParams({ orgId })
+  1227→    if (shopId) params.set('shopId', shopId)
+  1228→    return this.request(`/api/product-types?${params.toString()}`)
+  1229→  }
+  1230→
+  1231→  async createProductType(orgId: string, data: {
+  1232→    name: string
+  1233→    icon?: string
+  1234→    attributes?: Array<{ name: string; fieldType: string; options?: string; required?: boolean }>
+  1235→  }): Promise<{ productType: ProductType }> {
+  1236→    const result = await this.request('/api/product-types', {
+  1237→      method: 'POST',
+  1238→      body: JSON.stringify({ orgId, ...data }),
+  1239→    })
+  1240→    // Invalidate product types cache so subsequent fetches include the new type
+  1241→    this.invalidateCache('GET:/api/product-types')
+  1242→    return result
+  1243→  }
+  1244→
+  1245→  async updateProductType(id: string, orgId: string, data: {
+  1246→    name?: string
+  1247→    icon?: string
+  1248→    attributes?: Array<{ name: string; fieldType: string; options?: string; required?: boolean }>
+  1249→  }): Promise<{ productType: ProductType }> {
+  1250→    const result = await this.request(`/api/product-types/${id}`, {
+  1251→      method: 'PATCH',
+  1252→      body: JSON.stringify({ orgId, ...data }),
+  1253→    })
+  1254→    // Invalidate product types cache so subsequent fetches reflect the update
+  1255→    this.invalidateCache('GET:/api/product-types')
+  1256→    return result
+  1257→  }
+  1258→
+  1259→  async deleteProductType(id: string, orgId: string): Promise<void> {
+  1260→    await this.request(`/api/product-types/${id}?orgId=${orgId}`, {
+  1261→      method: 'DELETE',
+  1262→    })
+  1263→    // Invalidate product types cache so subsequent fetches reflect the deletion
+  1264→    this.invalidateCache('GET:/api/product-types')
+  1265→  }
+  1266→
+  1267→  // ============================================
+  1268→  // Products
+  1269→  // ============================================
+  1270→
+  1271→  async getProducts(orgId: string, params?: {
+  1272→    productTypeId?: string
+  1273→    search?: string
+  1274→    page?: number
+  1275→    limit?: number
+  1276→    shopId?: string
+  1277→  }): Promise<{ products: Product[]; pagination: Pagination }> {
+  1278→    const searchParams = new URLSearchParams({ orgId })
+  1279→    if (params?.productTypeId) searchParams.set('productTypeId', params.productTypeId)
+  1280→    if (params?.search) searchParams.set('search', params.search)
+  1281→    if (params?.page) searchParams.set('page', params.page.toString())
+  1282→    if (params?.limit) searchParams.set('limit', params.limit.toString())
+  1283→    if (params?.shopId) searchParams.set('shopId', params.shopId)
+  1284→    return this.request(`/api/products?${searchParams.toString()}`)
+  1285→  }
+  1286→
+  1287→  async createProduct(orgId: string, data: {
+  1288→    productTypeId: string
+  1289→    name: string
+  1290→    sku?: string
+  1291→    description?: string
+  1292→    imageUrl?: string
+  1293→    quantity?: number
+  1294→    costPrice?: number
+  1295→    sellingPrice?: number
+  1296→    lowStockThreshold?: number
+  1297→    attributeValues?: Array<{ attributeDefinitionId: string; value: string }>
+  1298→    shopId?: string
+  1299→  }): Promise<{ product: Product }> {
+  1300→    const result = await this.request('/api/products', {
+  1301→      method: 'POST',
+  1302→      body: JSON.stringify({ orgId, ...data }),
+  1303→    })
+  1304→    this.invalidateCache('GET:/api/products')
+  1305→    this.invalidateCache('GET:/api/inventory')
+  1306→    this.invalidateCache('GET:/api/dashboard')
+  1307→    return result
+  1308→  }
+  1309→
+  1310→  async updateProduct(id: string, orgId: string, data: {
+  1311→    name?: string
+  1312→    sku?: string
+  1313→    description?: string
+  1314→    imageUrl?: string
+  1315→    costPrice?: number
+  1316→    sellingPrice?: number
+  1317→    lowStockThreshold?: number
+  1318→    attributeValues?: Array<{ attributeDefinitionId: string; value: string }>
+  1319→  }): Promise<{ product: Product }> {
+  1320→    const result = await this.request(`/api/products/${id}`, {
+  1321→      method: 'PATCH',
+  1322→      body: JSON.stringify({ orgId, ...data }),
+  1323→    })
+  1324→    this.invalidateCache('GET:/api/products')
+  1325→    this.invalidateCache('GET:/api/inventory')
+  1326→    this.invalidateCache('GET:/api/dashboard')
+  1327→    return result
+  1328→  }
+  1329→
+  1330→  async deleteProduct(id: string, orgId: string): Promise<void> {
+  1331→    await this.request(`/api/products/${id}?orgId=${orgId}`, {
+  1332→      method: 'DELETE',
+  1333→    })
+  1334→    this.invalidateCache('GET:/api/products')
+  1335→    this.invalidateCache('GET:/api/inventory')
+  1336→    this.invalidateCache('GET:/api/dashboard')
+  1337→  }
+  1338→
+  1339→  // ============================================
+  1340→  // Inventory
+  1341→  // ============================================
+  1342→
+  1343→  async getInventory(orgId: string, shopId?: string): Promise<InventoryStats> {
+  1344→    const params = new URLSearchParams({ orgId })
+  1345→    if (shopId) params.set('shopId', shopId)
+  1346→    return this.request(`/api/inventory?${params.toString()}`)
+  1347→  }
+  1348→
+  1349→  async addStockMovement(orgId: string, data: {
+  1350→    productId: string
+  1351→    type: string
+  1352→    quantity: number
+  1353→    reason?: string
+  1354→    reference?: string
+  1355→    shopId?: string
+  1356→  }): Promise<{ movement: StockMovement }> {
+  1357→    return this.request('/api/inventory', {
+  1358→      method: 'POST',
+  1359→      body: JSON.stringify({ orgId, ...data }),
+  1360→    })
+  1361→  }
+  1362→
+  1363→  async getProductStockHistory(productId: string, orgId: string): Promise<{ movements: StockMovement[] }> {
+  1364→    return this.request(`/api/inventory/${productId}?orgId=${orgId}`)
+  1365→  }
+  1366→
+  1367→  // ============================================
+  1368→  // Customers
+  1369→  // ============================================
+  1370→
+  1371→  async getCustomers(orgId: string, params?: {
+  1372→    search?: string
+  1373→    page?: number
+  1374→    limit?: number
+  1375→    shopId?: string
+  1376→  }): Promise<{ customers: Customer[]; pagination: Pagination }> {
+  1377→    const searchParams = new URLSearchParams({ orgId })
+  1378→    if (params?.search) searchParams.set('search', params.search)
+  1379→    if (params?.page) searchParams.set('page', params.page.toString())
+  1380→    if (params?.limit) searchParams.set('limit', params.limit.toString())
+  1381→    if (params?.shopId) searchParams.set('shopId', params.shopId)
+  1382→    return this.request(`/api/customers?${searchParams.toString()}`)
+  1383→  }
+  1384→
+  1385→  async createCustomer(orgId: string, data: {
+  1386→    name: string
+  1387→    email?: string
+  1388→    phone?: string
+  1389→    address?: string
+  1390→    shopId?: string
+  1391→  }): Promise<{ customer: Customer }> {
+  1392→    const result = await this.request('/api/customers', {
+  1393→      method: 'POST',
+  1394→      body: JSON.stringify({ orgId, ...data }),
+  1395→    })
+  1396→    this.invalidateCache('GET:/api/customers')
+  1397→    return result
+  1398→  }
+  1399→
+  1400→  async updateCustomer(id: string, orgId: string, data: {
+  1401→    name?: string
+  1402→    email?: string
+  1403→    phone?: string
+  1404→    address?: string
+  1405→  }): Promise<{ customer: Customer }> {
+  1406→    const result = await this.request(`/api/customers/${id}`, {
+  1407→      method: 'PATCH',
+  1408→      body: JSON.stringify({ orgId, ...data }),
+  1409→    })
+  1410→    this.invalidateCache('GET:/api/customers')
+  1411→    return result
+  1412→  }
+  1413→
+  1414→  async deleteCustomer(id: string, orgId: string): Promise<void> {
+  1415→    await this.request(`/api/customers/${id}?orgId=${orgId}`, {
+  1416→      method: 'DELETE',
+  1417→    })
+  1418→    this.invalidateCache('GET:/api/customers')
+  1419→  }
+  1420→
+  1421→  // ============================================
+  1422→  // Suppliers
+  1423→  // ============================================
+  1424→
+  1425→  async getSuppliers(orgId: string, params?: {
+  1426→    search?: string
+  1427→    page?: number
+  1428→    limit?: number
+  1429→    shopId?: string
+  1430→  }): Promise<{ suppliers: Supplier[]; pagination: Pagination }> {
+  1431→    const searchParams = new URLSearchParams({ orgId })
+  1432→    if (params?.search) searchParams.set('search', params.search)
+  1433→    if (params?.page) searchParams.set('page', params.page.toString())
+  1434→    if (params?.limit) searchParams.set('limit', params.limit.toString())
+  1435→    if (params?.shopId) searchParams.set('shopId', params.shopId)
+  1436→    return this.request(`/api/suppliers?${searchParams.toString()}`)
+  1437→  }
+  1438→
+  1439→  async createSupplier(orgId: string, data: {
+  1440→    name: string
+  1441→    email?: string
+  1442→    phone?: string
+  1443→    address?: string
+  1444→    shopId?: string
+  1445→  }): Promise<{ supplier: Supplier }> {
+  1446→    return this.request('/api/suppliers', {
+  1447→      method: 'POST',
+  1448→      body: JSON.stringify({ orgId, ...data }),
+  1449→    })
+  1450→  }
+  1451→
+  1452→  async updateSupplier(id: string, orgId: string, data: {
+  1453→    name?: string
+  1454→    email?: string
+  1455→    phone?: string
+  1456→    address?: string
+  1457→  }): Promise<{ supplier: Supplier }> {
+  1458→    return this.request(`/api/suppliers/${id}`, {
+  1459→      method: 'PATCH',
+  1460→      body: JSON.stringify({ orgId, ...data }),
+  1461→    })
+  1462→  }
+  1463→
+  1464→  async deleteSupplier(id: string, orgId: string): Promise<void> {
+  1465→    await this.request(`/api/suppliers/${id}?orgId=${orgId}`, {
+  1466→      method: 'DELETE',
+  1467→    })
+  1468→  }
+  1469→
+  1470→  // ============================================
+  1471→  // Sales
+  1472→  // ============================================
+  1473→
+  1474→  async getSales(orgId: string, params?: {
+  1475→    startDate?: string
+  1476→    endDate?: string
+  1477→    status?: string
+  1478→    page?: number
+  1479→    limit?: number
+  1480→    shopId?: string
+  1481→  }): Promise<{ sales: Sale[]; pagination: Pagination }> {
+  1482→    const searchParams = new URLSearchParams({ orgId })
+  1483→    if (params?.startDate) searchParams.set('startDate', params.startDate)
+  1484→    if (params?.endDate) searchParams.set('endDate', params.endDate)
+  1485→    if (params?.status) searchParams.set('status', params.status)
+  1486→    if (params?.page) searchParams.set('page', params.page.toString())
+  1487→    if (params?.limit) searchParams.set('limit', params.limit.toString())
+  1488→    if (params?.shopId) searchParams.set('shopId', params.shopId)
+  1489→    return this.request(`/api/sales?${searchParams.toString()}`)
+  1490→  }
+  1491→
+  1492→  async createSale(orgId: string, data: {
+  1493→    customerId?: string
+  1494→    items: Array<{ productId: string; quantity: number; unitPrice?: number }>
+  1495→    paymentMethod?: string
+  1496→    discount?: number
+  1497→    tax?: number
+  1498→    amountPaid?: number
+  1499→    notes?: string
+  1500→    shopId?: string
+  1501→  }): Promise<{ sale: Sale }> {
+  1502→    const result = await this.request('/api/sales', {
+  1503→      method: 'POST',
+  1504→      body: JSON.stringify({ orgId, ...data }),
+  1505→    })
+  1506→    // Invalidate all related caches after sale creation
+  1507→    this.invalidateCache('GET:/api/sales')
+  1508→    this.invalidateCache('GET:/api/dashboard')
+  1509→    this.invalidateCache('GET:/api/inventory')
+  1510→    this.invalidateCache('GET:/api/products')
+  1511→    this.invalidateCache('GET:/api/debts')
+  1512→    return result
+  1513→  }
+  1514→
+  1515→  async getSale(id: string, orgId: string): Promise<{ sale: Sale }> {
+  1516→    return this.request(`/api/sales/${id}?orgId=${orgId}`)
+  1517→  }
+  1518→
+  1519→  // ============================================
+  1520→  // Debts
+  1521→  // ============================================
+  1522→
+  1523→  async getDebts(orgId: string, params?: {
+  1524→    status?: string
+  1525→    type?: string
+  1526→    page?: number
+  1527→    limit?: number
+  1528→    shopId?: string
+  1529→  }): Promise<{
+  1530→    debts: Debt[]
+  1531→    summary: {
+  1532→      totalCustomerDebt: number
+  1533→      totalSupplierDebt: number
+  1534→      totalOutstanding: number
+  1535→    }
+  1536→    pagination: Pagination
+  1537→  }> {
+  1538→    const searchParams = new URLSearchParams({ orgId })
+  1539→    if (params?.status) searchParams.set('status', params.status)
+  1540→    if (params?.type) searchParams.set('type', params.type)
+  1541→    if (params?.page) searchParams.set('page', params.page.toString())
+  1542→    if (params?.limit) searchParams.set('limit', params.limit.toString())
+  1543→    if (params?.shopId) searchParams.set('shopId', params.shopId)
+  1544→    return this.request(`/api/debts?${searchParams.toString()}`)
+  1545→  }
+  1546→
+  1547→  async createDebt(orgId: string, data: {
+  1548→    customerId?: string
+  1549→    supplierId?: string
+  1550→    type: string
+  1551→    amount: number
+  1552→    dueDate?: string
+  1553→    description?: string
+  1554→    shopId?: string
+  1555→  }): Promise<{ debt: Debt }> {
+  1556→    return this.request('/api/debts', {
+  1557→      method: 'POST',
+  1558→      body: JSON.stringify({ orgId, ...data }),
+  1559→    })
+  1560→  }
+  1561→
+  1562→  async addDebtPayment(id: string, orgId: string, data: {
+  1563→    amount: number
+  1564→    paymentMethod?: string
+  1565→    notes?: string
+  1566→  }): Promise<{ debt: Debt }> {
+  1567→    return this.request(`/api/debts/${id}`, {
+  1568→      method: 'PATCH',
+  1569→      body: JSON.stringify({ orgId, ...data }),
+  1570→    })
+  1571→  }
+  1572→
+  1573→  // ============================================
+  1574→  // Expenses
+  1575→  // ============================================
+  1576→
+  1577→  async getExpenses(orgId: string, params?: {
+  1578→    category?: string
+  1579→    page?: number
+  1580→    limit?: number
+  1581→    shopId?: string
+  1582→  }): Promise<{
+  1583→    expenses: Expense[]
+  1584→    summary: { totalExpenses: number }
+  1585→    monthlySummary: Array<{ month: string; total: number }>
+  1586→    pagination: Pagination
+  1587→  }> {
+  1588→    const searchParams = new URLSearchParams({ organizationId: orgId })
+  1589→    if (params?.category) searchParams.set('category', params.category)
+  1590→    if (params?.page) searchParams.set('page', params.page.toString())
+  1591→    if (params?.limit) searchParams.set('limit', params.limit.toString())
+  1592→    if (params?.shopId) searchParams.set('shopId', params.shopId)
+  1593→    return this.request(`/api/expenses?${searchParams.toString()}`)
+  1594→  }
+  1595→
+  1596→  async createExpense(orgId: string, data: {
+  1597→    category: string
+  1598→    amount: number
+  1599→    description?: string | null
+  1600→    expenseDate: string
+  1601→    shopId?: string | null
+  1602→    isRecurring?: boolean
+  1603→    recurringPeriod?: string | null
+  1604→  }): Promise<{ expense: Expense }> {
+  1605→    return this.request('/api/expenses', {
+  1606→      method: 'POST',
+  1607→      body: JSON.stringify({ organizationId: orgId, ...data }),
+  1608→    })
+  1609→  }
+  1610→
+  1611→  async updateExpense(id: string, orgId: string, data: {
+  1612→    category: string
+  1613→    amount: number
+  1614→    description?: string | null
+  1615→    expenseDate: string
+  1616→    shopId?: string | null
+  1617→    isRecurring?: boolean
+  1618→    recurringPeriod?: string | null
+  1619→  }): Promise<{ expense: Expense }> {
+  1620→    return this.request(`/api/expenses/${id}?organizationId=${orgId}`, {
+  1621→      method: 'PUT',
+  1622→      body: JSON.stringify({ organizationId: orgId, ...data }),
+  1623→    })
+  1624→  }
+  1625→
+  1626→  async deleteExpense(id: string, orgId: string): Promise<void> {
+  1627→    return this.request(`/api/expenses/${id}?organizationId=${orgId}`, {
+  1628→      method: 'DELETE',
+  1629→    })
+  1630→  }
+  1631→
+  1632→  // ============================================
+  1633→  // Dashboard
+  1634→  // ============================================
+  1635→
+  1636→  async getDashboard(orgId: string, shopId?: string, from?: string, to?: string): Promise<DashboardData> {
+  1637→    const params = new URLSearchParams({ orgId })
+  1638→    if (shopId) params.set('shopId', shopId)
+  1639→    if (from) params.set('from', from)
+  1640→    if (to) params.set('to', to)
+  1641→    return this.request(`/api/dashboard?${params.toString()}`)
+  1642→  }
+  1643→
+  1644→  async getProductBarcode(productId: string, orgId: string): Promise<{
+  1645→    product: { id: string; name: string; sku: string | null; costPrice: number; sellingPrice: number; quantity: number; productType: { id: string; name: string } }
+  1646→    barcode: string
+  1647→    qr: string
+  1648→  }> {
+  1649→    return this.request(`/api/products/${productId}/barcode?orgId=${orgId}`)
+  1650→  }
+  1651→
+  1652→  async importProducts(orgId: string, data: {
+  1653→    shopId?: string
+  1654→    products: Array<{
+  1655→      name: string
+  1656→      sku?: string
+  1657→      productType?: string
+  1658→      costPrice: number
+  1659→      sellingPrice: number
+  1660→      quantity: number
+  1661→      lowStockThreshold: number
+  1662→    }>
+  1663→  }): Promise<{
+  1664→    successCount: number
+  1665→    failureCount: number
+  1666→    errors: Array<{ row: number; field: string; message: string }>
+  1667→    totalAttempted: number
+  1668→  }> {
+  1669→    return this.request('/api/products/import', {
+  1670→      method: 'POST',
+  1671→      body: JSON.stringify({ organizationId: orgId, ...data }),
+  1672→    })
+  1673→  }
+  1674→
+  1675→  // ============================================
+  1676→  // Reports
+  1677→  // ============================================
+  1678→
+  1679→  async getReports(orgId: string, params: {
+  1680→    startDate: string
+  1681→    endDate: string
+  1682→    period?: string
+  1683→    shopId?: string
+  1684→  }): Promise<{
+  1685→    salesByPeriod: Array<{ period: string; revenue: number; cost: number; profit: number; count: number }>
+  1686→    bestSellingProducts: Array<{ productId: string; productName: string; totalQuantity: number; totalRevenue: number }>
+  1687→    inventoryValuation: { totalCostValue: number; totalRetailValue: number; totalProducts: number }
+  1688→  }> {
+  1689→    const filteredParams = Object.fromEntries(
+  1690→      Object.entries({ orgId, ...params }).filter(([, v]) => v !== undefined && v !== null && v !== '')
+  1691→    )
+  1692→    const searchParams = new URLSearchParams(filteredParams)
+  1693→    return this.request(`/api/reports?${searchParams.toString()}`)
+  1694→  }
+  1695→
+  1696→  // ============================================
+  1697→  // AI
+  1698→  // ============================================
+  1699→
+  1700→  async analyzeProductImage(orgId: string, imageFile: File): Promise<{
+  1701→    analysis: {
+  1702→      productName: string
+  1703→      category: string
+  1704→      estimatedPrice: string
+  1705→      attributes: Array<{ key: string; value: string }>
+  1706→      description: string
+  1707→    }
+  1708→  }> {
+  1709→    const token = this.getToken()
+  1710→    const formData = new FormData()
+  1711→    formData.append('image', imageFile)
+  1712→    formData.append('orgId', orgId)
+  1713→
+  1714→    const headers: Record<string, string> = {}
+  1715→    // Add JWT token to Authorization header if available
+  1716→    if (token) {
+  1717→      headers['Authorization'] = `Bearer ${token}`
+  1718→    }
+  1719→
+  1720→    const response = await fetch('/api/ai/inventory-assistant', {
+  1721→      method: 'POST',
+  1722→      headers,
+  1723→      body: formData,
+  1724→    })
+  1725→
+  1726→    const data = await response.json()
+  1727→    if (!response.ok) {
+  1728→      throw new Error(data.error || 'An error occurred')
+  1729→    }
+  1730→    return data
+  1731→  }
+  1732→
+  1733→  async askBusinessQuestion(orgId: string, question: string): Promise<{
+  1734→    answer: string
+  1735→  }> {
+  1736→    return this.request('/api/ai/business-assistant', {
+  1737→      method: 'POST',
+  1738→      body: JSON.stringify({ orgId, question }),
+  1739→    })
+  1740→  }
+  1741→
+  1742→  // ============================================
+  1743→  // Subscriptions
+  1744→  // ============================================
+  1745→
+  1746→  async getSubscription(orgId: string): Promise<{
+  1747→    subscription: Subscription & { planLimits: Record<string, unknown> }
+  1748→  }> {
+  1749→    return this.request(`/api/subscriptions?orgId=${orgId}`)
+  1750→  }
+  1751→
+  1752→  async updateSubscription(orgId: string, plan: string): Promise<{
+  1753→    subscription: Subscription
+  1754→  }> {
+  1755→    return this.request('/api/subscriptions', {
+  1756→      method: 'POST',
+  1757→      body: JSON.stringify({ orgId, plan }),
+  1758→    })
+  1759→  }
+  1760→
+  1761→  // ============================================
+  1762→  // Service Types
+  1763→  // ============================================
+  1764→
+  1765→  async getServiceTypes(orgId: string): Promise<{ serviceTypes: ServiceType[] }> {
+  1766→    return this.request(`/api/service-types?orgId=${orgId}`)
+  1767→  }
+  1768→
+  1769→  async createServiceType(orgId: string, data: {
+  1770→    name: string
+  1771→    description?: string
+  1772→    duration: number
+  1773→    price: number
+  1774→    imageUrl?: string
+  1775→  }): Promise<{ serviceType: ServiceType }> {
+  1776→    return this.request('/api/service-types', {
+  1777→      method: 'POST',
+  1778→      body: JSON.stringify({ orgId, ...data }),
+  1779→    })
+  1780→  }
+  1781→
+  1782→  async updateServiceType(id: string, orgId: string, data: {
+  1783→    name?: string
+  1784→    description?: string
+  1785→    duration?: number
+  1786→    price?: number
+  1787→    imageUrl?: string
+  1788→    isActive?: boolean
+  1789→  }): Promise<{ serviceType: ServiceType }> {
+  1790→    return this.request(`/api/service-types/${id}`, {
+  1791→      method: 'PATCH',
+  1792→      body: JSON.stringify({ orgId, ...data }),
+  1793→    })
+  1794→  }
+  1795→
+  1796→  async deleteServiceType(id: string, orgId: string): Promise<void> {
+  1797→    await this.request(`/api/service-types/${id}?orgId=${orgId}`, {
+  1798→      method: 'DELETE',
+  1799→    })
+  1800→  }
+  1801→
+  1802→  // ============================================
+  1803→  // Service Bookings
+  1804→  // ============================================
+  1805→
+  1806→  async getServiceBookings(orgId: string, params?: {
+  1807→    date?: string
+  1808→    status?: string
+  1809→    page?: number
+  1810→    limit?: number
+  1811→    shopId?: string
+  1812→  }): Promise<{ bookings: ServiceBooking[]; pagination: Pagination }> {
+  1813→    const searchParams = new URLSearchParams({ orgId })
+  1814→    if (params?.date) searchParams.set('date', params.date)
+  1815→    if (params?.status) searchParams.set('status', params.status)
+  1816→    if (params?.page) searchParams.set('page', params.page.toString())
+  1817→    if (params?.limit) searchParams.set('limit', params.limit.toString())
+  1818→    if (params?.shopId) searchParams.set('shopId', params.shopId)
+  1819→    return this.request(`/api/service-bookings?${searchParams.toString()}`)
+  1820→  }
+  1821→
+  1822→  async createServiceBooking(orgId: string, data: {
+  1823→    serviceTypeId: string
+  1824→    customerName: string
+  1825→    customerPhone?: string
+  1826→    bookingDate: string
+  1827→    startTime: string
+  1828→    endTime: string
+  1829→    notes?: string
+  1830→    customerId?: string
+  1831→    shopId?: string
+  1832→  }): Promise<{ booking: ServiceBooking }> {
+  1833→    return this.request('/api/service-bookings', {
+  1834→      method: 'POST',
+  1835→      body: JSON.stringify({ orgId, ...data }),
+  1836→    })
+  1837→  }
+  1838→
+  1839→  async updateServiceBooking(id: string, orgId: string, data: {
+  1840→    status?: string
+  1841→    notes?: string
+  1842→  }): Promise<{ booking: ServiceBooking }> {
+  1843→    return this.request(`/api/service-bookings/${id}`, {
+  1844→      method: 'PATCH',
+  1845→      body: JSON.stringify({ orgId, ...data }),
+  1846→    })
+  1847→  }
+  1848→
+  1849→  // ============================================
+  1850→  // Admin
+  1851→  // ============================================
+  1852→
+  1853→  async getAdminDashboard(regionId?: string): Promise<AdminDashboardData> {
+  1854→    if (regionId) {
+  1855→      return this.request(`/api/admin/dashboard?regionId=${regionId}`)
+  1856→    }
+  1857→    return this.request('/api/admin/dashboard')
+  1858→  }
+  1859→
+  1860→  async getAdminShops(params?: {
+  1861→    search?: string
+  1862→    businessType?: string
+  1863→    city?: string
+  1864→    subscriptionPlan?: string
+  1865→    regionId?: string
+  1866→    page?: number
+  1867→    limit?: number
+  1868→  }): Promise<{ shops: ShopData[]; pagination: Pagination }> {
+  1869→    const searchParams = new URLSearchParams()
+  1870→    if (params?.search) searchParams.set('search', params.search)
+  1871→    if (params?.businessType) searchParams.set('businessType', params.businessType)
+  1872→    if (params?.city) searchParams.set('city', params.city)
+  1873→    if (params?.subscriptionPlan) searchParams.set('subscriptionPlan', params.subscriptionPlan)
+  1874→    if (params?.regionId) searchParams.set('regionId', params.regionId)
+  1875→    if (params?.page) searchParams.set('page', params.page.toString())
+  1876→    if (params?.limit) searchParams.set('limit', params.limit.toString())
+  1877→    return this.request(`/api/admin/shops?${searchParams.toString()}`)
+  1878→  }
+  1879→
+  1880→  async getAdminMarketInsights(regionId?: string): Promise<MarketInsightsData> {
+  1881→    if (regionId) {
+  1882→      return this.request(`/api/admin/market-insights?regionId=${regionId}`)
+  1883→    }
+  1884→    return this.request('/api/admin/market-insights')
+  1885→  }
+  1886→
+  1887→  async getSystemHealth(): Promise<SystemHealthData> {
+  1888→    return this.request('/api/admin/system/health')
+  1889→  }
+  1890→
+  1891→  // ============================================
+  1892→  // Shops
+  1893→  // ============================================
+  1894→
+  1895→  async getShops(orgId: string): Promise<{ shops: Shop[] }> {
+  1896→    return this.request(`/api/shops?orgId=${orgId}`)
+  1897→  }
+  1898→
+  1899→  async createShop(orgId: string, data: {
+  1900→    name: string
+  1901→    address?: string
+  1902→    city?: string
+  1903→    latitude?: number
+  1904→    longitude?: number
+  1905→    phone?: string
+  1906→  }): Promise<{ shop: Shop }> {
+  1907→    return this.request('/api/shops', {
+  1908→      method: 'POST',
+  1909→      body: JSON.stringify({ orgId, ...data }),
+  1910→    })
+  1911→  }
+  1912→
+  1913→  async updateShop(id: string, orgId: string, data: {
+  1914→    name?: string
+  1915→    address?: string
+  1916→    city?: string
+  1917→    latitude?: number
+  1918→    longitude?: number
+  1919→    phone?: string
+  1920→    isActive?: boolean
+  1921→  }): Promise<{ shop: Shop }> {
+  1922→    return this.request(`/api/shops/${id}`, {
+  1923→      method: 'PATCH',
+  1924→      body: JSON.stringify({ orgId, ...data }),
+  1925→    })
+  1926→  }
+  1927→
+  1928→  // ============================================
+  1929→  // Shop Members
+  1930→  // ============================================
+  1931→
+  1932→  async getShopMembers(shopId: string, orgId: string): Promise<{ members: ShopMemberData[] }> {
+  1933→    return this.request(`/api/shops/${shopId}/members?orgId=${orgId}`)
+  1934→  }
+  1935→
+  1936→  async addShopMember(shopId: string, orgId: string, data: {
+  1937→    userId: string
+  1938→    role: string
+  1939→  }): Promise<{ member: ShopMemberData }> {
+  1940→    return this.request(`/api/shops/${shopId}/members`, {
+  1941→      method: 'POST',
+  1942→      body: JSON.stringify({ orgId, ...data }),
+  1943→    })
+  1944→  }
+  1945→
+  1946→  async updateShopMember(shopId: string, memberId: string, orgId: string, data: {
+  1947→    role: string
+  1948→  }): Promise<{ member: ShopMemberData }> {
+  1949→    return this.request(`/api/shops/${shopId}/members/${memberId}`, {
+  1950→      method: 'PATCH',
+  1951→      body: JSON.stringify({ orgId, ...data }),
+  1952→    })
+  1953→  }
+  1954→
+  1955→  async removeShopMember(shopId: string, memberId: string, orgId: string): Promise<void> {
+  1956→    await this.request(`/api/shops/${shopId}/members/${memberId}?orgId=${orgId}`, {
+  1957→      method: 'DELETE',
+  1958→    })
+  1959→  }
+  1960→
+  1961→  // ============================================
+  1962→  // Modules
+  1963→  // ============================================
+  1964→
+  1965→  async getModules(orgId: string): Promise<{ modules: ModuleData[] }> {
+  1966→    interface ModuleApiResponse {
+  1967→      id: string
+  1968→      key: string
+  1969→      name: string
+  1970→      description: string
+  1971→      icon: string
+  1972→      category: string
+  1973→      priceETB: number
+  1974→      isFree: boolean
+  1975→      freeTrialDays: number
+  1976→      billingCycle: string
+  1977→      order: number
+  1978→      isActive: boolean // Platform-level active flag
+  1979→      orgStatus?: {
+  1980→        isActive: boolean
+  1981→        status: string
+  1982→        activatedAt: string | null
+  1983→        expiresAt: string | null
+  1984→        priceAtActivation: number
+  1985→        autoRenew: boolean
+  1986→      } | null
+  1987→    }
+  1988→    const data = await this.request<{ modules: ModuleApiResponse[] }>(`/api/modules?orgId=${orgId}`)
+  1989→    // Transform: isActive in ModuleData means "org has this module activated"
+  1990→    const modules: ModuleData[] = data.modules.map(m => ({
+  1991→      id: m.id,
+  1992→      key: m.key,
+  1993→      name: m.name,
+  1994→      description: m.description,
+  1995→      icon: m.icon,
+  1996→      category: m.category,
+  1997→      priceETB: m.priceETB,
+  1998→      isFree: m.isFree,
+  1999→      freeTrialDays: m.freeTrialDays,
+  2000→      billingCycle: m.billingCycle,
+
+[showing lines 1-2000 of 3042; use offset=2001 with limit to continue reading]
