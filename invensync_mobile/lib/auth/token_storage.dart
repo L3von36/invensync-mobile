@@ -1,5 +1,8 @@
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+/// Token storage using SharedPreferences.
+/// TODO: Swap back to flutter_secure_storage for production
+/// (requires NDK on Android, keychain on iOS).
 class TokenStorage {
   static const _tokenKey = 'auth_token';
   static const _refreshTokenKey = 'refresh_token';
@@ -10,55 +13,95 @@ class TokenStorage {
   static const _bootstrapDoneKey = 'bootstrap_done';
   static const _shopIdKey = 'current_shop_id';
 
-  final FlutterSecureStorage _storage = const FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
-    iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
-  );
-
-  Future<String?> getToken() => _storage.read(key: _tokenKey);
-
-  Future<void> saveToken(String token) =>
-      _storage.write(key: _tokenKey, value: token);
-
-  Future<String?> getRefreshToken() => _storage.read(key: _refreshTokenKey);
-
-  Future<void> saveRefreshToken(String token) =>
-      _storage.write(key: _refreshTokenKey, value: token);
-
-  Future<String?> getUserId() => _storage.read(key: _userIdKey);
-
-  Future<void> saveUserId(String id) =>
-      _storage.write(key: _userIdKey, value: id);
-
-  Future<String?> getOrganizationId() => _storage.read(key: _orgIdKey);
-
-  Future<void> saveOrganizationId(String id) =>
-      _storage.write(key: _orgIdKey, value: id);
-
-  Future<String?> getOrganizationName() => _storage.read(key: _orgNameKey);
-
-  Future<void> saveOrganizationName(String name) =>
-      _storage.write(key: _orgNameKey, value: name);
-
-  Future<String?> getCurrency() => _storage.read(key: _currencyKey);
-
-  Future<void> saveCurrency(String currency) =>
-      _storage.write(key: _currencyKey, value: currency);
-
-  Future<bool> isBootstrapped() async {
-    final val = await _storage.read(key: _bootstrapDoneKey);
-    return val == 'true';
+  Future<String?> getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_tokenKey);
   }
 
-  Future<void> setBootstrapped(bool done) =>
-      _storage.write(key: _bootstrapDoneKey, value: done.toString());
+  Future<void> saveToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_tokenKey, token);
+  }
 
-  Future<String?> getCurrentShopId() => _storage.read(key: _shopIdKey);
+  Future<String?> getRefreshToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_refreshTokenKey);
+  }
 
-  Future<void> setCurrentShopId(String id) =>
-      _storage.write(key: _shopIdKey, value: id);
+  Future<void> saveRefreshToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_refreshTokenKey, token);
+  }
+
+  Future<String?> getUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_userIdKey);
+  }
+
+  Future<void> saveUserId(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_userIdKey, id);
+  }
+
+  Future<String?> getOrganizationId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_orgIdKey);
+  }
+
+  Future<void> saveOrganizationId(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_orgIdKey, id);
+  }
+
+  Future<String?> getOrganizationName() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_orgNameKey);
+  }
+
+  Future<void> saveOrganizationName(String name) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_orgNameKey, name);
+  }
+
+  Future<String?> getCurrency() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_currencyKey);
+  }
+
+  Future<void> saveCurrency(String currency) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_currencyKey, currency);
+  }
+
+  Future<bool> isBootstrapped() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_bootstrapDoneKey) ?? false;
+  }
+
+  Future<void> setBootstrapped(bool done) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_bootstrapDoneKey, done);
+  }
+
+  Future<String?> getCurrentShopId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_shopIdKey);
+  }
+
+  Future<void> setCurrentShopId(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_shopIdKey, id);
+  }
 
   Future<void> clearAll() async {
-    await _storage.deleteAll();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_tokenKey);
+    await prefs.remove(_refreshTokenKey);
+    await prefs.remove(_userIdKey);
+    await prefs.remove(_orgIdKey);
+    await prefs.remove(_orgNameKey);
+    await prefs.remove(_currencyKey);
+    await prefs.remove(_bootstrapDoneKey);
+    await prefs.remove(_shopIdKey);
   }
 }

@@ -23,8 +23,8 @@ dependencies:
   path_provider: ^2.1.5
   path: ^1.9.1
   
-  # Secure storage
-  flutter_secure_storage: ^9.2.4
+  # Storage (swap to flutter_secure_storage for production)
+  shared_preferences: ^2.3.4
   
   # Connectivity
   connectivity_plus: ^6.1.1
