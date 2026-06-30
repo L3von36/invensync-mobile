@@ -1,0 +1,92 @@
+[
+  {
+    "url": "https://www.odoo-community.org/blog/news-updates-1/advanced-field-service-management-in-odoo-107",
+    "name": "Advanced Field Service Management in Odoo",
+    "snippet": "If the mobile unit is disconnected from the mobile network the FSM app will cache the updates and sync with the server once connectivity is restored.",
+    "host_name": "www.odoo-community.org",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.odoo.com/forum/help-1/pwa-offline-mode-280808",
+    "name": "PWA Offline Mode | Odoo",
+    "snippet": "My plan is how to implementing offline mode PWA like in pos odoo now to other module odoo (like purchase,sales, or custom module)",
+    "host_name": "www.odoo.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=P9j4MYuPq0o",
+    "name": "How to Use OCA FREE CRM Apps | Lead Product - YouTube",
+    "snippet": "In this video tutorial you will learn how to use OCA's FREE CRM Apps to make your Odoo CRM journey more fruitful and result oriented.",
+    "host_name": "www.youtube.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://shakilbd.medium.com/conflict-resolution-in-offline-first-apps-when-local-and-remote-diverge-12334baa01a7",
+    "name": "Conflict Resolution in Offline-First Apps When Local and Remote",
+    "snippet": "Conflicts happen because of three realities: Latency is real — Networks aren't synchronous. A message sent offline may only sync hours later.",
+    "host_name": "shakilbd.medium.com",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.reddit.com/r/Odoo/comments/1g268gc/bank_synchronization_with_odoo_community_edition",
+    "name": "Bank Synchronization with Odoo Community Edition - Reddit",
+    "snippet": "Bank Synchronization with Odoo Community Edition exclusive features are easy to replace with OCA modules and 3rd party.",
+    "host_name": "www.reddit.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://apps.odoo.com/apps/modules/15.0/partner_phone_secondary",
+    "name": "Secondary phone number on partners - Odoo Apps Store",
+    "snippet": "This module is part of the OCA/partner-contact project on GitHub. Odoo is a suite of open source business apps that cover all your company needs: CRM, ...",
+    "host_name": "apps.odoo.com",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://w-4.com.pk/blog/how-to-resolve-data-conflicts-in-odoo-integrations",
+    "name": "How to Resolve Data Conflicts in Odoo Integrations - At W4 Martech",
+    "snippet": "Resolving these conflicts requires identifying the root causes, such as simultaneous updates, network delays, or inconsistent data formats. ...",
+    "host_name": "w-4.com.pk",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://github.com/kmee/oca-mobile",
+    "name": "OCA Mobile - Odoo React Native - a Modern Odoo APP made with",
+    "snippet": "OCA Mobile is a modern, well-supported, and cross-platform App made with React Native. It is intended to be a replacement for the Odoo SA APP.",
+    "host_name": "github.com",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://apps.odoo.com/apps/modules/?series=&author=Odoo%20Community%20Association%20(OCA)",
+    "name": "Top charts: Odoo Community Association (OCA) Apps author",
+    "snippet": "Odoo is a suite of open source business apps that cover all your company needs: CRM, eCommerce, accounting, inventory, point of sale, project management, etc.",
+    "host_name": "apps.odoo.com",
+    "rank": 8,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.cybrosys.com/blog/how-to-implement-offline-mode-in-mobo-with-odoo-data-sync",
+    "name": "How to Implement Offline Mode in Mobo with Odoo Data Sync",
+    "snippet": "Implement Mobo offline mode with Odoo sync to access critical business data anytime, anywhere—secure, scalable & performance-driven.",
+    "host_name": "www.cybrosys.com",
+    "rank": 9,
+    "date": "",
+    "favicon": ""
+  }
+]

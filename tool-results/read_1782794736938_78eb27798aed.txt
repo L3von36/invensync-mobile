@@ -1,0 +1,1313 @@
+     1→     1→// ============================================
+     2→     2→// Sync Engine — Offline-first sync with outbox pattern
+     3→     3→// ============================================
+     4→     4→// Manages bidirectional sync between local Dexie database
+     5→     5→// and remote API. Uses an outbox table for offline writes
+     6→     6→// and delta sync for pulls.
+     7→     7→//
+     8→     8→// This REPLACES the older offline-queue.ts module.
+     9→     9→// ============================================
+    10→    10→
+    11→    11→import { authFetch } from '@/lib/auth-fetch'
+    12→    12→import { db } from '@/lib/db'
+    13→    13→import {
+    14→    14→  resolveConflict,
+    15→    15→  findConflictingFields,
+    16→    16→  type ConflictInfo,
+    17→    17→  BASE_VALUES_KEY,
+    18→    18→} from '@/lib/sync/conflict'
+    19→    19→
+    20→    20→// ============================================
+    21→    21→// Types
+    22→    22→// ============================================
+    23→    23→
+    24→    24→export interface OutboxItem {
+    25→    25→  id: string
+    26→    26→  entity: string
+    27→    27→  operation: 'create' | 'update' | 'delete'
+    28→    28→  payload: string
+    29→    29→  localId?: string
+    30→    30→  serverId?: string
+    31→    31→  createdAt: string
+    32→    32→  retryCount: number
+    33→    33→  status: 'pending' | 'syncing' | 'synced' | 'failed' | 'conflict'
+    34→    34→  error?: string
+    35→    35→  lastAttemptAt?: string | null
+    36→    36→}
+    37→    37→
+    38→    38→export interface SyncEvent {
+    39→    39→  id: string
+    40→    40→  type:
+    41→    41→    | 'sync_start'
+    42→    42→    | 'sync_progress'
+    43→    43→    | 'sync_complete'
+    44→    44→    | 'sync_error'
+    45→    45→    | 'item_synced'
+    46→    46→    | 'item_failed'
+    47→    47→    | 'item_conflict'
+    48→    48→    | 'delta_sync_start'
+    49→    49→    | 'delta_sync_complete'
+    50→    50→  entity?: string
+    51→    51→  details?: string
+    52→    52→  timestamp: number
+    53→    53→  progress?: { completed: number; total: number }
+    54→    54→}
+    55→    55→
+    56→    56→export interface SyncStatus {
+    57→    57→  isSyncing: boolean
+    58→    58→  lastSyncedAt: Date | null
+    59→    59→  pendingCount: number
+    60→    60→  failedCount: number
+    61→    61→  conflictCount: number
+    62→    62→  pendingByEntity: Record<string, number>
+    63→    63→  recentEvents: SyncEvent[]
+    64→    64→}
+    65→    65→
+    66→    66→type SyncStatusListener = (status: SyncStatus) => void
+    67→    67→
+    68→    68→// ============================================
+    69→    69→// Entity Mappings
+    70→    70→// ============================================
+    71→    71→
+    72→    72→const ENTITY_ENDPOINTS: Record<string, string> = {
+    73→    73→  products: '/api/products',
+    74→    74→  categories: '/api/product-types',
+    75→    75→  customers: '/api/customers',
+    76→    76→  suppliers: '/api/suppliers',
+    77→    77→  sales: '/api/sales',
+    78→    78→  saleItems: '/api/sales',
+    79→    79→  stockMovements: '/api/inventory',
+    80→    80→  debts: '/api/debts',
+    81→    81→  expenses: '/api/expenses',
+    82→    82→  purchaseOrders: '/api/purchase-orders',
+    83→    83→  serviceBookings: '/api/service-bookings',
+    84→    84→  serviceTypes: '/api/service-types',
+    85→    85→  shops: '/api/shops',
+    86→    86→}
+    87→    87→
+    88→    88→const ENTITY_TABLES: Record<string, string> = {
+    89→    89→  products: 'products',
+    90→    90→  categories: 'categories',
+    91→    91→  customers: 'customers',
+    92→    92→  suppliers: 'suppliers',
+    93→    93→  sales: 'sales',
+    94→    94→  saleItems: 'saleItems',
+    95→    95→  stockMovements: 'stockMovements',
+    96→    96→  debts: 'debts',
+    97→    97→  expenses: 'expenses',
+    98→    98→  purchaseOrders: 'purchaseOrders',
+    99→    99→  serviceBookings: 'serviceBookings',
+   100→   100→  serviceTypes: 'serviceTypes',
+   101→   101→  shops: 'shops',
+   102→   102→}
+   103→   103→
+   104→   104→const ALL_ENTITIES = Object.keys(ENTITY_ENDPOINTS)
+   105→   105→
+   106→   106→// Exponential backoff delays: 2s, 8s, 30s, 2m, 10m
+   107→   107→const BACKOFF_DELAYS = [2000, 8000, 30000, 120000, 600000]
+   108→   108→
+   109→   109→const MAX_RETRIES = 5
+   110→   110→
+   111→   111→// ============================================
+   112→   112→// Helpers
+   113→   113→// ============================================
+   114→   114→
+   115→   115→function generateId(): string {
+   116→   116→  return `sync_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
+   117→   117→}
+   118→   118→
+   119→   119→function getBackoffDelay(retryCount: number): number {
+   120→   120→  const index = Math.min(retryCount, BACKOFF_DELAYS.length) - 1
+   121→   121→  return index >= 0 ? BACKOFF_DELAYS[index] : BACKOFF_DELAYS[BACKOFF_DELAYS.length - 1]
+   122→   122→}
+   123→   123→
+   124→   124→function isReadyForRetry(item: OutboxItem): boolean {
+   125→   125→  if (item.retryCount === 0) return true
+   126→   126→  if (!item.lastAttemptAt) return true
+   127→   127→  const delay = getBackoffDelay(item.retryCount)
+   128→   128→  return Date.now() - new Date(item.lastAttemptAt).getTime() >= delay
+   129→   129→}
+   130→   130→
+   131→   131→function getMethodForOperation(operation: OutboxItem['operation']): string {
+   132→   132→  switch (operation) {
+   133→   133→    case 'create':
+   134→   134→      return 'POST'
+   135→   135→    case 'update':
+   136→   136→      return 'PUT'
+   137→   137→    case 'delete':
+   138→   138→      return 'DELETE'
+   139→   139→  }
+   140→   140→}
+   141→   141→
+   142→   142→// ============================================
+   143→   143→// Connectivity Service Interface
+   144→   144→// ============================================
+   145→   145→// Minimal interface for the connectivity service.
+   146→   146→// We import dynamically to handle the case where
+   147→   147→// the module hasn't been created yet.
+   148→   148→
+   149→   149→interface ConnectivityService {
+   150→   150→  isOnline: boolean
+   151→   151→  subscribe(callback: (online: boolean) => void): () => void
+   152→   152→}
+   153→   153→
+   154→   154→let connectivityService: ConnectivityService | null = null
+   155→   155→
+   156→   156→async function getConnectivityService(): Promise<ConnectivityService | null> {
+   157→   157→  if (connectivityService) return connectivityService
+   158→   158→  try {
+   159→   159→    const mod = await import('@/lib/sync/connectivity')
+   160→   160→    connectivityService = mod.connectivityService ?? mod.default ?? null
+   161→   161→    return connectivityService
+   162→   162→  } catch {
+   163→   163→    console.log('[Sync] Connectivity service not available, assuming online')
+   164→   164→    return null
+   165→   165→  }
+   166→   166→}
+   167→   167→
+   168→   168→// ============================================
+   169→   169→// Dexie Database Helper
+   170→   170→// ============================================
+   171→   171→
+   172→   172→function getDexieDb(): typeof db | null {
+   173→   173→  if (typeof window === 'undefined') return null
+   174→   174→  try {
+   175→   175→    return db
+   176→   176→  } catch {
+   177→   177→    return null
+   178→   178→  }
+   179→   179→}
+   180→   180→
+   181→   181→// ============================================
+   182→   182→// SyncEngine Class
+   183→   183→// ============================================
+   184→   184→
+   185→   185→class SyncEngine {
+   186→   186→  private isSyncing = false
+   187→   187→  private lastSyncedAt: Date | null = null
+   188→   188→  private listeners: Set<SyncStatusListener> = new Set()
+   189→   189→  private recentEvents: SyncEvent[] = []
+   190→   190→  private maxRecentEvents = 50
+   191→   191→  private autoSyncTimer: ReturnType<typeof setInterval> | null = null
+   192→   192→  private pullTimer: ReturnType<typeof setInterval> | null = null
+   193→   193→  private connectivityCleanup: (() => void) | null = null
+   194→   194→  private abortController: AbortController | null = null
+   195→   195→  // Org/shop context for auto-pull (set when startAutoSync is called with context)
+   196→   196→  private syncContext: { orgId: string; shopId?: string } | null = null
+   197→   197→
+   198→   198→  constructor() {
+   199→   199→    if (typeof window === 'undefined') return
+   200→   200→    console.log('[Sync] Engine initialized')
+   201→   201→  }
+   202→   202→
+   203→   203→  // ------------------------------------------
+   204→   204→  // Event System
+   205→   205→  // ------------------------------------------
+   206→   206→
+   207→   207→  private emitEvent(
+   208→   208→    type: SyncEvent['type'],
+   209→   209→    entity?: string,
+   210→   210→    details?: string,
+   211→   211→    progress?: { completed: number; total: number }
+   212→   212→  ): void {
+   213→   213→    const event: SyncEvent = {
+   214→   214→      id: generateId(),
+   215→   215→      type,
+   216→   216→      entity,
+   217→   217→      details,
+   218→   218→      timestamp: Date.now(),
+   219→   219→      progress,
+   220→   220→    }
+   221→   221→
+   222→   222→    this.recentEvents.unshift(event)
+   223→   223→    if (this.recentEvents.length > this.maxRecentEvents) {
+   224→   224→      this.recentEvents = this.recentEvents.slice(0, this.maxRecentEvents)
+   225→   225→    }
+   226→   226→
+   227→   227→    console.log(
+   228→   228→      `[Sync] ${type}${entity ? ` (${entity})` : ''}${details ? ` — ${details}` : ''}`
+   229→   229→    )
+   230→   230→
+   231→   231→    this.notifyListeners()
+   232→   232→  }
+   233→   233→
+   234→   234→  private notifyListeners(): void {
+   235→   235→    const status = this.getStatus()
+   236→   236→    for (const listener of this.listeners) {
+   237→   237→      try {
+   238→   238→        listener(status)
+   239→   239→      } catch (err) {
+   240→   240→        console.error('[Sync] Listener error:', err)
+   241→   241→      }
+   242→   242→    }
+   243→   243→  }
+   244→   244→
+   245→   245→  // ------------------------------------------
+   246→   246→  // Status
+   247→   247→  // ------------------------------------------
+   248→   248→
+   249→   249→  async getStatus(): Promise<SyncStatus> {
+   250→   250→    const dexieDb = getDexieDb()
+   251→   251→
+   252→   252→    let pendingCount = 0
+   253→   253→    let failedCount = 0
+   254→   254→    let conflictCount = 0
+   255→   255→    const pendingByEntity: Record<string, number> = {}
+   256→   256→
+   257→   257→    if (dexieDb) {
+   258→   258→      try {
+   259→   259→        const allItems: OutboxItem[] = await dexieDb.outbox.toArray()
+   260→   260→
+   261→   261→        for (const item of allItems) {
+   262→   262→          if (item.status === 'pending' || item.status === 'syncing') {
+   263→   263→            pendingCount++
+   264→   264→            pendingByEntity[item.entity] = (pendingByEntity[item.entity] ?? 0) + 1
+   265→   265→          } else if (item.status === 'failed') {
+   266→   266→            failedCount++
+   267→   267→          } else if (item.status === 'conflict') {
+   268→   268→            conflictCount++
+   269→   269→          }
+   270→   270→        }
+   271→   271→      } catch (err) {
+   272→   272→        console.error('[Sync] Failed to read outbox status:', err)
+   273→   273→      }
+   274→   274→    }
+   275→   275→
+   276→   276→    return {
+   277→   277→      isSyncing: this.isSyncing,
+   278→   278→      lastSyncedAt: this.lastSyncedAt,
+   279→   279→      pendingCount,
+   280→   280→      failedCount,
+   281→   281→      conflictCount,
+   282→   282→      pendingByEntity,
+   283→   283→      recentEvents: [...this.recentEvents],
+   284→   284→    }
+   285→   285→  }
+   286→   286→
+   287→   287→  // ------------------------------------------
+   288→   288→  // Subscribe
+   289→   289→  // ------------------------------------------
+   290→   290→
+   291→   291→  subscribe(listener: SyncStatusListener): () => void {
+   292→   292→    this.listeners.add(listener)
+   293→   293→
+   294→   294→    // Immediately push current status
+   295→   295→    this.getStatus().then((status) => {
+   296→   296→      try {
+   297→   297→        listener(status)
+   298→   298→      } catch {
+   299→   299→        // Ignore listener errors during initial push
+   300→   300→      }
+   301→   301→    })
+   302→   302→
+   303→   303→    return () => {
+   304→   304→      this.listeners.delete(listener)
+   305→   305→    }
+   306→   306→  }
+   307→   307→
+   308→   308→  // ------------------------------------------
+   309→   309→  // Push — Drain the outbox
+   310→   310→  // ------------------------------------------
+   311→   311→
+   312→   312→  async push(): Promise<{ synced: number; failed: number; conflicts: number }> {
+   313→   313→    if (typeof window === 'undefined') {
+   314→   314→      return { synced: 0, failed: 0, conflicts: 0 }
+   315→   315→    }
+   316→   316→
+   317→   317→    const dexieDb = getDexieDb()
+   318→   318→    if (!dexieDb) {
+   319→   319→      console.log('[Sync] Database not available, skipping push')
+   320→   320→      return { synced: 0, failed: 0, conflicts: 0 }
+   321→   321→    }
+   322→   322→
+   323→   323→    // Check connectivity
+   324→   324→    const connService = await getConnectivityService()
+   325→   325→    if (connService && !connService.isOnline) {
+   326→   326→      console.log('[Sync] Offline, skipping push')
+   327→   327→      return { synced: 0, failed: 0, conflicts: 0 }
+   328→   328→    }
+   329→   329→
+   330→   330→    if (this.isSyncing) {
+   331→   331→      console.log('[Sync] Already syncing, skipping push')
+   332→   332→      return { synced: 0, failed: 0, conflicts: 0 }
+   333→   333→    }
+   334→   334→
+   335→   335→    this.isSyncing = true
+   336→   336→    this.abortController = new AbortController()
+   337→   337→    this.emitEvent('sync_start')
+   338→   338→
+   339→   339→    let synced = 0
+   340→   340→    let failed = 0
+   341→   341→    let conflicts = 0
+   342→   342→
+   343→   343→    try {
+   344→   344→      // Get all pending items ordered by createdAt ASC
+   345→   345→      const pendingItems: OutboxItem[] = await dexieDb.outbox
+   346→   346→        .where('status')
+   347→   347→        .anyOf(['pending', 'failed'])
+   348→   348→        .sortBy('createdAt')
+   349→   349→
+   350→   350→      // Filter items that are ready for retry (respecting backoff)
+   351→   351→      const readyItems = pendingItems.filter((item) => {
+   352→   352→        if (item.status === 'pending') return true
+   353→   353→        if (item.status === 'failed') return isReadyForRetry(item)
+   354→   354→        return false
+   355→   355→      })
+   356→   356→
+   357→   357→      if (readyItems.length === 0) {
+   358→   358→        this.emitEvent('sync_complete', undefined, 'No pending items')
+   359→   359→        return { synced: 0, failed: 0, conflicts: 0 }
+   360→   360→      }
+   361→   361→
+   362→   362→      console.log(`[Sync] Processing ${readyItems.length} outbox items`)
+   363→   363→
+   364→   364→      // Process items sequentially to maintain order
+   365→   365→      for (let i = 0; i < readyItems.length; i++) {
+   366→   366→        // Check if aborted
+   367→   367→        if (this.abortController?.signal.aborted) {
+   368→   368→          console.log('[Sync] Push aborted')
+   369→   369→          break
+   370→   370→        }
+   371→   371→
+   372→   372→        const item = readyItems[i]
+   373→   373→        this.emitEvent('sync_progress', item.entity, `Processing ${item.operation}`, {
+   374→   374→          completed: i,
+   375→   375→          total: readyItems.length,
+   376→   376→        })
+   377→   377→
+   378→   378→        const result = await this.processOutboxItem(item)
+   379→   379→
+   380→   380→        if (result === 'synced') {
+   381→   381→          synced++
+   382→   382→        } else if (result === 'conflict') {
+   383→   383→          conflicts++
+   384→   384→        } else if (result === 'failed') {
+   385→   385→          failed++
+   386→   386→        }
+   387→   387→      }
+   388→   388→
+   389→   389→      this.lastSyncedAt = new Date()
+   390→   390→      this.emitEvent(
+   391→   391→        'sync_complete',
+   392→   392→        undefined,
+   393→   393→        `Synced: ${synced}, Failed: ${failed}, Conflicts: ${conflicts}`,
+   394→   394→        { completed: readyItems.length, total: readyItems.length }
+   395→   395→      )
+   396→   396→    } catch (err) {
+   397→   397→      console.error('[Sync] Push error:', err)
+   398→   398→      this.emitEvent('sync_error', undefined, String(err))
+   399→   399→    } finally {
+   400→   400→      this.isSyncing = false
+   401→   401→      this.abortController = null
+   402→   402→    }
+   403→   403→
+   404→   404→    return { synced, failed, conflicts }
+   405→   405→  }
+   406→   406→
+   407→   407→  private async processOutboxItem(
+   408→   408→    item: OutboxItem
+   409→   409→  ): Promise<'synced' | 'failed' | 'conflict' | 'skipped'> {
+   410→   410→    const dexieDb = getDexieDb()
+   411→   411→    if (!dexieDb) return 'skipped'
+   412→   412→
+   413→   413→    // Set status to syncing
+   414→   414→    item.status = 'syncing'
+   415→   415→    item.lastAttemptAt = new Date().toISOString()
+   416→   416→    await dexieDb.outbox.put(item)
+   417→   417→
+   418→   418→    try {
+   419→   419→      // Try to use the original endpoint/method stored by offline-queue.ts
+   420→   420→      // when the mutation was queued while offline. Falls back to entity
+   421→   421→      // mapping when not present (e.g., writes from LocalRepository).
+   422→   422→      let payloadObj: Record<string, unknown> | null = null
+   423→   423→      try {
+   424→   424→        payloadObj = typeof item.payload === 'string'
+   425→   425→          ? JSON.parse(item.payload)
+   426→   426→          : (item.payload as Record<string, unknown>)
+   427→   427→      } catch {
+   428→   428→        // Payload isn't valid JSON — use as-is
+   429→   429→      }
+   430→   430→
+   431→   431→      const originalEndpoint = payloadObj?._endpoint as string | undefined
+   432→   432→      const originalMethod = payloadObj?._method as string | undefined
+   433→   433→
+   434→   434→      // Strip _endpoint/_method from payload before sending to server
+   435→   435→      let cleanPayload: string
+   436→   436→      if (payloadObj && (payloadObj._endpoint || payloadObj._method)) {
+   437→   437→        const { _endpoint, _method, _rawBody, ...rest } = payloadObj
+   438→   438→        cleanPayload = JSON.stringify(rest)
+   439→   439→      } else {
+   440→   440→        cleanPayload = typeof item.payload === 'string' ? item.payload : JSON.stringify(item.payload)
+   441→   441→      }
+   442→   442→
+   443→   443→      const entityEndpoint = ENTITY_ENDPOINTS[item.entity]
+   444→   444→      let url = originalEndpoint || entityEndpoint
+   445→   445→      if (!url) {
+   446→   446→        console.error(`[Sync] Unknown entity: ${item.entity}`)
+   447→   447→        item.status = 'failed'
+   448→   448→        item.error = `Unknown entity: ${item.entity}`
+   449→   449→        await dexieDb.outbox.put(item)
+   450→   450→        this.emitEvent('item_failed', item.entity, item.error)
+   451→   451→        return 'failed'
+   452→   452→      }
+   453→   453→
+   454→   454→      const method = originalMethod || getMethodForOperation(item.operation)
+   455→   455→
+   456→   456→      // For updates and deletes, append the ID to the URL
+   457→   457→      // (but only if the URL doesn't already contain an ID path segment)
+   458→   458→      if ((item.operation === 'update' || item.operation === 'delete') && !originalEndpoint) {
+   459→   459→        const id = item.serverId || item.localId
+   460→   460→        if (id) {
+   461→   461→          url = `${entityEndpoint}/${id}`
+   462→   462→        } else {
+   463→   463→          console.error(`[Sync] No ID for ${item.operation} on ${item.entity}`)
+   464→   464→          item.status = 'failed'
+   465→   465→          item.error = `No ID available for ${item.operation} operation`
+   466→   466→          await dexieDb.outbox.put(item)
+   467→   467→          this.emitEvent('item_failed', item.entity, item.error)
+   468→   468→          return 'failed'
+   469→   469→        }
+   470→   470→      }
+   471→   471→
+   472→   472→      const fetchOptions: RequestInit & { contentType?: boolean } = {
+   473→   473→        method,
+   474→   474→      }
+   475→   475→
+   476→   476→      // Add body for create and update
+   477→   477→      if (item.operation === 'create' || item.operation === 'update') {
+   478→   478→        fetchOptions.body = cleanPayload
+   479→   479→      }
+   480→   480→
+   481→   481→      const signal = this.abortController?.signal
+   482→   482→      if (signal) {
+   483→   483→        fetchOptions.signal = signal
+   484→   484→      }
+   485→   485→
+   486→   486→      const response = await authFetch(url, fetchOptions)
+   487→   487→
+   488→   488→      // Success
+   489→   489→      if (response.ok) {
+   490→   490→        item.status = 'synced'
+   491→   491→
+   492→   492→        // For creates, store the server-returned ID
+   493→   493→        if (item.operation === 'create') {
+   494→   494→          try {
+   495→   495→            const data = await response.json()
+   496→   496→            if (data?.id) {
+   497→   497→              item.serverId = String(data.id)
+   498→   498→            } else if (data?.data?.id) {
+   499→   499→              item.serverId = String(data.data.id)
+   500→   500→            }
+   501→   501→          } catch {
+   502→   502→            // Response wasn't JSON or had no ID, that's okay
+   503→   503→          }
+   504→   504→        }
+   505→   505→
+   506→   506→        await dexieDb.outbox.put(item)
+   507→   507→        this.emitEvent('item_synced', item.entity, `${item.operation} successful`)
+   508→   508→        return 'synced'
+   509→   509→      }
+   510→   510→
+   511→   511→      // 409 Conflict — attempt automatic resolution before flagging as manual.
+   512→   512→      //
+   513→   513→      // The server returns its current version of the record in the 409 body.
+   514→   514→      // We parse it, build a ConflictInfo, and call resolveConflict() with the
+   515→   515→      // entity's default strategy (LWW for most entities, delta-merge for
+   516→   516→      // products.quantity / debts.paidAmount / stockMovements.quantity).
+   517→   517→      //
+   518→   518→      // - If the strategy auto-resolves (LWW / server-wins / client-wins /
+   519→   519→      //   delta-merge), we write the merged record to the server via PUT and
+   520→   520→      //   update the local Dexie table. The outbox item is marked 'synced'.
+   521→   521→      // - If the strategy is 'manual' (none currently), we fall back to the
+   522→   522→      //   old behavior: mark the item as 'conflict' for the SyncPanel UI.
+   523→   523→      if (response.status === 409) {
+   524→   524→        let serverData: Record<string, unknown> = {}
+   525→   525→        let serverBodyText = ''
+   526→   526→        try {
+   527→   527→          serverBodyText = await response.text()
+   528→   528→          const parsed = JSON.parse(serverBodyText)
+   529→   529→          // Server may return { record: {...} } or { data: {...} } or the record directly
+   530→   530→          serverData = (parsed && (parsed.record || parsed.data || parsed)) || {}
+   531→   531→        } catch {
+   532→   532→          // Body wasn't JSON — can't auto-resolve
+   533→   533→        }
+   534→   534→
+   535→   535→        const localData = (payloadObj ?? {}) as Record<string, unknown>
+   536→   536→        const recordId = String(serverData.id ?? item.serverId ?? item.localId ?? '')
+   537→   537→
+   538→   538→        const conflictInfo: ConflictInfo = {
+   539→   539→          entity: item.entity,
+   540→   540→          localId: item.localId ?? recordId,
+   541→   541→          serverId: item.serverId ?? (serverData.id ? String(serverData.id) : undefined),
+   542→   542→          operation: item.operation,
+   543→   543→          localData,
+   544→   544→          serverData,
+   545→   545→          localUpdatedAt: String(localData.updatedAt ?? new Date().toISOString()),
+   546→   546→          serverUpdatedAt: String(serverData.updatedAt ?? new Date().toISOString()),
+   547→   547→          conflictingFields: findConflictingFields(localData, serverData),
+   548→   548→        }
+   549→   549→
+   550→   550→        const resolution = resolveConflict(conflictInfo)
+   551→   551→
+   552→   552→        if (resolution.strategy !== 'manual' && resolution.resolvedData) {
+   553→   553→          // Auto-resolved — push the merged/winning version to the server.
+   554→   554→          console.log(
+   555→   555→            `[Sync] Conflict auto-resolved for ${item.entity} ${recordId} ` +
+   556→   556→            `(strategy=${resolution.strategy}, winner=${resolution.winner}, ` +
+   557→   557→            `conflictingFields=[${conflictInfo.conflictingFields.join(',')}])`
+   558→   558→          )
+   559→   559→
+   560→   560→          try {
+   561→   561→            // Strip internal _baseValues before sending
+   562→   562→            const mergedPayload = { ...resolution.resolvedData }
+   563→   563→            delete (mergedPayload as Record<string, unknown>)[BASE_VALUES_KEY]
+   564→   564→            delete (mergedPayload as Record<string, unknown>)['_endpoint']
+   565→   565→            delete (mergedPayload as Record<string, unknown>)['_method']
+   566→   566→            delete (mergedPayload as Record<string, unknown>)['_rawBody']
+   567→   567→
+   568→   568→            const entityEndpoint = ENTITY_ENDPOINTS[item.entity]
+   569→   569→            const updateUrl = `${entityEndpoint}/${recordId}`
+   570→   570→            const updateResp = await authFetch(updateUrl, {
+   571→   571→              method: 'PUT',
+   572→   572→              body: JSON.stringify(mergedPayload),
+   573→   573→              signal: this.abortController?.signal,
+   574→   574→            })
+   575→   575→
+   576→   576→            if (updateResp.ok) {
+   577→   577→              // Update the local Dexie table with the resolved record
+   578→   578→              const tableName = ENTITY_TABLES[item.entity]
+   579→   579→              if (tableName) {
+   580→   580→                try {
+   581→   581→                  // Ensure the merged record has the right id + timestamps
+   582→   582→                  const localRecord = {
+   583→   583→                    ...resolution.resolvedData,
+   584→   584→                    id: recordId,
+   585→   585→                    updatedAt: new Date().toISOString(),
+   586→   586→                  }
+   587→   587→                  delete (localRecord as Record<string, unknown>)[BASE_VALUES_KEY]
+   588→   588→                  await dexieDb.table(tableName).put(localRecord)
+   589→   589→                } catch (err) {
+   590→   590→                  console.warn(`[Sync] Failed to update local table after conflict resolution:`, err)
+   591→   591→                }
+   592→   592→              }
+   593→   593→
+   594→   594→              item.status = 'synced'
+   595→   595→              item.error = undefined
+   596→   596→              await dexieDb.outbox.put(item)
+   597→   597→              this.emitEvent(
+   598→   598→                'item_synced',
+   599→   599→                item.entity,
+   600→   600→                `Conflict auto-resolved (${resolution.strategy}, ${resolution.winner})`
+   601→   601→              )
+   602→   602→              return 'synced'
+   603→   603→            } else {
+   604→   604→              // The re-PUT failed — fall back to flagging as conflict
+   605→   605→              const errBody = await updateResp.text().catch(() => '')
+   606→   606→              item.status = 'conflict'
+   607→   607→              item.error = `Conflict resolution re-PUT failed (${updateResp.status}): ${errBody.slice(0, 200)}`
+   608→   608→              await dexieDb.outbox.put(item)
+   609→   609→              this.emitEvent('item_conflict', item.entity, item.error)
+   610→   610→              return 'conflict'
+   611→   611→            }
+   612→   612→          } catch (err) {
+   613→   613→            item.status = 'conflict'
+   614→   614→            item.error = `Conflict resolution error: ${String(err)}`
+   615→   615→            await dexieDb.outbox.put(item)
+   616→   616→            this.emitEvent('item_conflict', item.entity, item.error)
+   617→   617→            return 'conflict'
+   618→   618→          }
+   619→   619→        }
+   620→   620→
+   621→   621→        // Manual strategy (or no server data to resolve with) — flag for user
+   622→   622→        item.status = 'conflict'
+   623→   623→        item.error = `Conflict (manual resolution required): ${serverBodyText.slice(0, 200)}`
+   624→   624→        await dexieDb.outbox.put(item)
+   625→   625→        this.emitEvent('item_conflict', item.entity, item.error)
+   626→   626→        return 'conflict'
+   627→   627→      }
+   628→   628→
+   629→   629→      // 4xx Client Error (not conflict)
+   630→   630→      if (response.status >= 400 && response.status < 500) {
+   631→   631→        item.status = 'failed'
+   632→   632→        try {
+   633→   633→          const body = await response.text()
+   634→   634→          item.error = `Client error ${response.status}: ${body}`
+   635→   635→        } catch {
+   636→   636→          item.error = `Client error: ${response.status}`
+   637→   637→        }
+   638→   638→        await dexieDb.outbox.put(item)
+   639→   639→        this.emitEvent('item_failed', item.entity, item.error)
+   640→   640→        return 'failed'
+   641→   641→      }
+   642→   642→
+   643→   643→      // 5xx Server Error or network error
+   644→   644→      item.retryCount++
+   645→   645→      if (item.retryCount > MAX_RETRIES) {
+   646→   646→        item.status = 'failed'
+   647→   647→        item.error = `Server error after ${MAX_RETRIES} retries: ${response.status}`
+   648→   648→        await dexieDb.outbox.put(item)
+   649→   649→        this.emitEvent('item_failed', item.entity, item.error)
+   650→   650→        return 'failed'
+   651→   651→      }
+   652→   652→
+   653→   653→      // Keep as pending for retry with backoff
+   654→   654→      item.status = 'pending'
+   655→   655→      try {
+   656→   656→        const body = await response.text()
+   657→   657→        item.error = `Server error ${response.status} (retry ${item.retryCount}/${MAX_RETRIES}): ${body}`
+   658→   658→      } catch {
+   659→   659→        item.error = `Server error ${response.status} (retry ${item.retryCount}/${MAX_RETRIES})`
+   660→   660→      }
+   661→   661→      await dexieDb.outbox.put(item)
+   662→   662→      this.emitEvent('item_failed', item.entity, item.error)
+   663→   663→      return 'failed'
+   664→   664→    } catch (err) {
+   665→   665→      // Network error
+   666→   666→      item.retryCount++
+   667→   667→      if (item.retryCount > MAX_RETRIES) {
+   668→   668→        item.status = 'failed'
+   669→   669→        item.error = `Network error after ${MAX_RETRIES} retries: ${String(err)}`
+   670→   670→        await dexieDb.outbox.put(item)
+   671→   671→        this.emitEvent('item_failed', item.entity, item.error)
+   672→   672→        return 'failed'
+   673→   673→      }
+   674→   674→
+   675→   675→      // Keep as pending for retry
+   676→   676→      item.status = 'pending'
+   677→   677→      item.error = `Network error (retry ${item.retryCount}/${MAX_RETRIES}): ${String(err)}`
+   678→   678→      await dexieDb.outbox.put(item)
+   679→   679→      this.emitEvent('item_failed', item.entity, item.error)
+   680→   680→      return 'failed'
+   681→   681→    }
+   682→   682→  }
+   683→   683→
+   684→   684→  // ------------------------------------------
+   685→   685→  // Pull — Delta sync for a single entity
+   686→   686→  // ------------------------------------------
+   687→   687→
+   688→   688→  async pull(
+   689→   689→    entity: string,
+   690→   690→    orgId: string,
+   691→   691→    shopId?: string
+   692→   692→  ): Promise<{ pulled: number; deleted: number }> {
+   693→   693→    if (typeof window === 'undefined') {
+   694→   694→      return { pulled: 0, deleted: 0 }
+   695→   695→    }
+   696→   696→
+   697→   697→    const dexieDb = getDexieDb()
+   698→   698→    if (!dexieDb) {
+   699→   699→      console.log('[Sync] Database not available, skipping pull')
+   700→   700→      return { pulled: 0, deleted: 0 }
+   701→   701→    }
+   702→   702→
+   703→   703→    const endpoint = ENTITY_ENDPOINTS[entity]
+   704→   704→    const tableName = ENTITY_TABLES[entity]
+   705→   705→
+   706→   706→    if (!endpoint || !tableName) {
+   707→   707→      console.error(`[Sync] Unknown entity for pull: ${entity}`)
+   708→   708→      return { pulled: 0, deleted: 0 }
+   709→   709→    }
+   710→   710→
+   711→   711→    // Read lastSyncedAt from syncMeta
+   712→   712→    let lastSyncedAt: string | null = null
+   713→   713→    try {
+   714→   714→      const meta = await dexieDb.syncMeta.get(entity)
+   715→   715→      if (meta?.lastSyncedAt) {
+   716→   716→        lastSyncedAt = meta.lastSyncedAt
+   717→   717→      }
+   718→   718→    } catch (err) {
+   719→   719→      console.error('[Sync] Failed to read syncMeta:', err)
+   720→   720→    }
+   721→   721→
+   722→   722→    this.emitEvent('delta_sync_start', entity, lastSyncedAt ? `Since ${lastSyncedAt}` : 'Full pull')
+   723→   723→
+   724→   724→    try {
+   725→   725→      // Build URL with query params
+   726→   726→      const params = new URLSearchParams({ orgId })
+   727→   727→      if (shopId) {
+   728→   728→        params.set('shopId', shopId)
+   729→   729→      }
+   730→   730→      if (lastSyncedAt) {
+   731→   731→        params.set('updatedSince', lastSyncedAt)
+   732→   732→      }
+   733→   733→
+   734→   734→      const url = `${endpoint}?${params.toString()}`
+   735→   735→      const response = await authFetch(url)
+   736→   736→
+   737→   737→      if (!response.ok) {
+   738→   738→        throw new Error(`Pull failed for ${entity}: ${response.status}`)
+   739→   739→      }
+   740→   740→
+   741→   741→      const data = await response.json()
+   742→   742→      const items: Record<string, unknown>[] = Array.isArray(data)
+   743→   743→        ? data
+   744→   744→        : Array.isArray(data.data)
+   745→   745→          ? data.data
+   746→   746→          : Array.isArray(data.items)
+   747→   747→            ? data.items
+   748→   748→            : []
+   749→   749→
+   750→   750→      let pulled = 0
+   751→   751→      let deleted = 0
+   752→   752→
+   753→   753→      const toUpsert: Record<string, unknown>[] = []
+   754→   754→      const toDelete: string[] = []
+   755→   755→
+   756→   756→      for (const item of items) {
+   757→   757→        const isDeleted = item._deleted === true || item.isActive === false
+   758→   758→        const itemId = String(item.id ?? item._id ?? '')
+   759→   759→
+   760→   760→        if (isDeleted) {
+   761→   761→          if (itemId) {
+   762→   762→            toDelete.push(itemId)
+   763→   763→          }
+   764→   764→          deleted++
+   765→   765→        } else {
+   766→   766→          toUpsert.push(item)
+   767→   767→          pulled++
+   768→   768→        }
+   769→   769→      }
+   770→   770→
+   771→   771→      // Upsert items into local Dexie table
+   772→   772→      if (toUpsert.length > 0) {
+   773→   773→        try {
+   774→   774→          await dexieDb.table(tableName).bulkPut(toUpsert)
+   775→   775→        } catch (err) {
+   776→   776→          console.error(`[Sync] bulkPut failed for ${tableName}:`, err)
+   777→   777→          // Try individual puts as fallback
+   778→   778→          for (const item of toUpsert) {
+   779→   779→            try {
+   780→   780→              await dexieDb.table(tableName).put(item)
+   781→   781→            } catch {
+   782→   782→              // Skip individual failures
+   783→   783→            }
+   784→   784→          }
+   785→   785→        }
+   786→   786→      }
+   787→   787→
+   788→   788→      // Delete items marked as deleted
+   789→   789→      for (const id of toDelete) {
+   790→   790→        try {
+   791→   791→          await dexieDb.table(tableName).delete(id)
+   792→   792→        } catch {
+   793→   793→          // Skip individual delete failures
+   794→   794→        }
+   795→   795→      }
+   796→   796→
+   797→   797→      // Update syncMeta with current timestamp
+   798→   798→      const now = new Date().toISOString()
+   799→   799→      await dexieDb.syncMeta.put({
+   800→   800→        id: entity,
+   801→   801→        lastSyncedAt: now,
+   802→   802→        entityCount: 0,
+   803→   803→      })
+   804→   804→
+   805→   805→      this.emitEvent(
+   806→   806→        'delta_sync_complete',
+   807→   807→        entity,
+   808→   808→        `Pulled: ${pulled}, Deleted: ${deleted}`
+   809→   809→      )
+   810→   810→
+   811→   811→      return { pulled, deleted }
+   812→   812→    } catch (err) {
+   813→   813→      console.error(`[Sync] Pull error for ${entity}:`, err)
+   814→   814→      this.emitEvent('sync_error', entity, String(err))
+   815→   815→      return { pulled: 0, deleted: 0 }
+   816→   816→    }
+   817→   817→  }
+   818→   818→
+   819→   819→  // ------------------------------------------
+   820→   820→  // PullAll — Delta sync all entities
+   821→   821→  // ------------------------------------------
+   822→   822→
+   823→   823→  async pullAll(
+   824→   824→    orgId: string,
+   825→   825→    shopId?: string
+   826→   826→  ): Promise<Record<string, { pulled: number; deleted: number }>> {
+   827→   827→    if (typeof window === 'undefined') {
+   828→   828→      return {}
+   829→   829→    }
+   830→   830→
+   831→   831→    // Check connectivity
+   832→   832→    const connService = await getConnectivityService()
+   833→   833→    if (connService && !connService.isOnline) {
+   834→   834→      console.log('[Sync] Offline, skipping pullAll')
+   835→   835→      return {}
+   836→   836→    }
+   837→   837→
+   838→   838→    this.emitEvent('sync_start', undefined, 'Delta sync all entities')
+   839→   839→
+   840→   840→    const results: Record<string, { pulled: number; deleted: number }> = {}
+   841→   841→    const total = ALL_ENTITIES.length
+   842→   842→
+   843→   843→    for (let i = 0; i < ALL_ENTITIES.length; i++) {
+   844→   844→      const entity = ALL_ENTITIES[i]
+   845→   845→      this.emitEvent('sync_progress', entity, `Delta sync ${i + 1}/${total}`, {
+   846→   846→        completed: i,
+   847→   847→        total,
+   848→   848→      })
+   849→   849→
+   850→   850→      results[entity] = await this.pull(entity, orgId, shopId)
+   851→   851→    }
+   852→   852→
+   853→   853→    this.lastSyncedAt = new Date()
+   854→   854→    this.emitEvent('sync_complete', undefined, 'Delta sync all complete')
+   855→   855→
+   856→   856→    return results
+   857→   857→  }
+   858→   858→
+   859→   859→  // ------------------------------------------
+   860→   860→  // Bootstrap — Full hydration
+   861→   861→  // ------------------------------------------
+   862→   862→
+   863→   863→  async bootstrap(
+   864→   864→    orgId: string,
+   865→   865→    shopId?: string
+   866→   866→  ): Promise<Record<string, { pulled: number }>> {
+   867→   867→    if (typeof window === 'undefined') {
+   868→   868→      return {}
+   869→   869→    }
+   870→   870→
+   871→   871→    // Check connectivity
+   872→   872→    const connService = await getConnectivityService()
+   873→   873→    if (connService && !connService.isOnline) {
+   874→   874→      console.log('[Sync] Offline, skipping bootstrap')
+   875→   875→      return {}
+   876→   876→    }
+   877→   877→
+   878→   878→    this.emitEvent('sync_start', undefined, 'Full bootstrap')
+   879→   879→
+   880→   880→    const results: Record<string, { pulled: number }> = {}
+   881→   881→    const total = ALL_ENTITIES.length
+   882→   882→
+   883→   883→    for (let i = 0; i < ALL_ENTITIES.length; i++) {
+   884→   884→      const entity = ALL_ENTITIES[i]
+   885→   885→      const endpoint = ENTITY_ENDPOINTS[entity]
+   886→   886→      const tableName = ENTITY_TABLES[entity]
+   887→   887→
+   888→   888→      if (!endpoint || !tableName) continue
+   889→   889→
+   890→   890→      this.emitEvent('sync_progress', entity, `Bootstrapping ${i + 1}/${total}`, {
+   891→   891→        completed: i,
+   892→   892→        total,
+   893→   893→      })
+   894→   894→
+   895→   895→      try {
+   896→   896→        // Fetch ALL data — no updatedSince filter
+   897→   897→        const params = new URLSearchParams({ orgId })
+   898→   898→        if (shopId) {
+   899→   899→          params.set('shopId', shopId)
+   900→   900→        }
+   901→   901→
+   902→   902→        const url = `${endpoint}?${params.toString()}`
+   903→   903→        const response = await authFetch(url)
+   904→   904→
+   905→   905→        if (!response.ok) {
+   906→   906→          console.error(`[Sync] Bootstrap failed for ${entity}: ${response.status}`)
+   907→   907→          results[entity] = { pulled: 0 }
+   908→   908→          continue
+   909→   909→        }
+   910→   910→
+   911→   911→        const data = await response.json()
+   912→   912→        const items: Record<string, unknown>[] = Array.isArray(data)
+   913→   913→          ? data
+   914→   914→          : Array.isArray(data.data)
+   915→   915→            ? data.data
+   916→   916→            : Array.isArray(data.items)
+   917→   917→              ? data.items
+   918→   918→              : []
+   919→   919→
+   920→   920→        // Filter out deleted items for bootstrap
+   921→   921→        const activeItems = items.filter(
+   922→   922→          (item) => item._deleted !== true && item.isActive !== false
+   923→   923→        )
+   924→   924→
+   925→   925→        // Write everything to Dexie tables using bulkPut
+   926→   926→        if (activeItems.length > 0) {
+   927→   927→          try {
+   928→   928→            await db.table(tableName).bulkPut(activeItems)
+   929→   929→          } catch (err) {
+   930→   930→            console.error(`[Sync] bulkPut failed for ${tableName}:`, err)
+   931→   931→            // Fallback: individual puts
+   932→   932→            for (const item of activeItems) {
+   933→   933→              try {
+   934→   934→                await db.table(tableName).put(item)
+   935→   935→              } catch {
+   936→   936→                // Skip individual failures
+   937→   937→              }
+   938→   938→            }
+   939→   939→          }
+   940→   940→        }
+   941→   941→
+   942→   942→        // Set syncMeta with current timestamp
+   943→   943→        const now = new Date().toISOString()
+   944→   944→        await db.syncMeta.put({
+   945→   945→          id: entity,
+   946→   946→          lastSyncedAt: now,
+   947→   947→          entityCount: 0,
+   948→   948→        })
+   949→   949→
+   950→   950→        results[entity] = { pulled: activeItems.length }
+   951→   951→        console.log(`[Sync] Bootstrapped ${entity}: ${activeItems.length} items`)
+   952→   952→      } catch (err) {
+   953→   953→        console.error(`[Sync] Bootstrap error for ${entity}:`, err)
+   954→   954→        results[entity] = { pulled: 0 }
+   955→   955→      }
+   956→   956→    }
+   957→   957→
+   958→   958→    this.lastSyncedAt = new Date()
+   959→   959→    this.emitEvent('sync_complete', undefined, 'Bootstrap complete')
+   960→   960→
+   961→   961→    return results
+   962→   962→  }
+   963→   963→
+   964→   964→  // ------------------------------------------
+   965→   965→  // Auto Sync
+   966→   966→  // ------------------------------------------
+   967→   967→
+   968→   968→  /**
+   969→   969→   * Starts automatic background synchronization.
+   970→   970→   *
+   971→   971→   * Two timers run in parallel:
+   972→   972→   *  - Push timer (intervalMs, default 5 min): drains the local outbox so
+   973→   973→   *    offline mutations reach the server.
+   974→   974→   *  - Pull timer (2× intervalMs, default 10 min): delta-syncs all entities
+   975→   975→   *    so remote changes made by OTHER devices/users propagate to this
+   976→   976→   *    device's IndexedDB automatically. No manual sync button required.
+   977→   977→   *
+   978→   978→   * The pull timer requires org/shop context so it can call pullAll(). If no
+   979→   979→   * context is provided, only push runs (backward-compatible behavior).
+   980→   980→   *
+   981→   981→   * On "back online" events, BOTH a push (drain outbox) and a pull (fetch
+   982→   982→   * remote changes) are triggered so the device is fully up-to-date.
+   983→   983→   */
+   984→   984→  async startAutoSync(
+   985→   985→    intervalMs: number = 5 * 60 * 1000,
+   986→   986→    context?: { orgId: string; shopId?: string }
+   987→   987→  ): Promise<() => void> {
+   988→   988→    if (typeof window === 'undefined') {
+   989→   989→      return () => {}
+   990→   990→    }
+   991→   991→
+   992→   992→    // Store context for auto-pull (and back-online events)
+   993→   993→    if (context) {
+   994→   994→      this.syncContext = context
+   995→   995→    }
+   996→   996→
+   997→   997→    console.log(
+   998→   998→      `[Sync] Starting auto sync with interval ${intervalMs}ms` +
+   999→   999→      (context ? ` (push + pull, orgId=${context.orgId})` : ' (push only — no org context)')
+  1000→  1000→    )
+  1001→  1001→
+  1002→  1002→    // Clear any existing timers
+  1003→  1003→    this.stopAutoSync()
+  1004→  1004→
+  1005→  1005→    // --- Push timer: drain outbox ---
+  1006→  1006→    this.autoSyncTimer = setInterval(async () => {
+  1007→  1007→      const connService = await getConnectivityService()
+  1008→  1008→      const isOnline = connService ? connService.isOnline : navigator.onLine
+  1009→  1009→
+  1010→  1010→      if (isOnline) {
+  1011→  1011→        console.log('[Sync] Auto push triggered')
+  1012→  1012→        await this.push()
+  1013→  1013→      } else {
+  1014→  1014→        console.log('[Sync] Offline, skipping auto push')
+  1015→  1015→      }
+  1016→  1016→    }, intervalMs)
+  1017→  1017→
+  1018→  1018→    // --- Pull timer: fetch remote changes (only if we have org context) ---
+  1019→  1019→    if (this.syncContext) {
+  1020→  1020→      const pullInterval = intervalMs * 2 // pull half as often as push
+  1021→  1021→      this.pullTimer = setInterval(async () => {
+  1022→  1022→        const connService = await getConnectivityService()
+  1023→  1023→        const isOnline = connService ? connService.isOnline : navigator.onLine
+  1024→  1024→
+  1025→  1025→        if (isOnline && this.syncContext) {
+  1026→  1026→          console.log('[Sync] Auto pull triggered — fetching remote changes')
+  1027→  1027→          try {
+  1028→  1028→            await this.pullAll(this.syncContext.orgId, this.syncContext.shopId)
+  1029→  1029→          } catch (err) {
+  1030→  1030→            console.error('[Sync] Auto pull failed:', err)
+  1031→  1031→          }
+  1032→  1032→        } else {
+  1033→  1033→          console.log('[Sync] Offline, skipping auto pull')
+  1034→  1034→        }
+  1035→  1035→      }, pullInterval)
+  1036→  1036→    }
+  1037→  1037→
+  1038→  1038→    // Listen for connectivity changes — sync when coming back online
+  1039→  1039→    const connService = await getConnectivityService()
+  1040→  1040→    if (connService) {
+  1041→  1041→      this.connectivityCleanup = connService.subscribe(async (online) => {
+  1042→  1042→        if (online) {
+  1043→  1043→          console.log('[Sync] Back online, triggering push + pull')
+  1044→  1044→          // Small delay to let connection stabilize
+  1045→  1045→          setTimeout(async () => {
+  1046→  1046→            await this.push()
+  1047→  1047→            // Also pull remote changes so this device is current
+  1048→  1048→            if (this.syncContext) {
+  1049→  1049→              try {
+  1050→  1050→                await this.pullAll(this.syncContext.orgId, this.syncContext.shopId)
+  1051→  1051→              } catch (err) {
+  1052→  1052→                console.error('[Sync] Back-online pull failed:', err)
+  1053→  1053→              }
+  1054→  1054→            }
+  1055→  1055→          }, 1000)
+  1056→  1056→        }
+  1057→  1057→      })
+  1058→  1058→    } else {
+  1059→  1059→      // Fallback: listen for browser online events
+  1060→  1060→      const handleOnline = () => {
+  1061→  1061→        console.log('[Sync] Browser online event, triggering push + pull')
+  1062→  1062→        setTimeout(async () => {
+  1063→  1063→          await this.push()
+  1064→  1064→          if (this.syncContext) {
+  1065→  1065→            try {
+  1066→  1066→              await this.pullAll(this.syncContext.orgId, this.syncContext.shopId)
+  1067→  1067→            } catch (err) {
+  1068→  1068→              console.error('[Sync] Browser-online pull failed:', err)
+  1069→  1069→            }
+  1070→  1070→          }
+  1071→  1071→        }, 1000)
+  1072→  1072→      }
+  1073→  1073→      window.addEventListener('online', handleOnline)
+  1074→  1074→      this.connectivityCleanup = () => {
+  1075→  1075→        window.removeEventListener('online', handleOnline)
+  1076→  1076→      }
+  1077→  1077→    }
+  1078→  1078→
+  1079→  1079→    // Return cleanup function
+  1080→  1080→    return () => {
+  1081→  1081→      this.stopAutoSync()
+  1082→  1082→    }
+  1083→  1083→  }
+  1084→  1084→
+  1085→  1085→  stopAutoSync(): void {
+  1086→  1086→    if (this.autoSyncTimer) {
+  1087→  1087→      clearInterval(this.autoSyncTimer)
+  1088→  1088→      this.autoSyncTimer = null
+  1089→  1089→    }
+  1090→  1090→    if (this.pullTimer) {
+  1091→  1091→      clearInterval(this.pullTimer)
+  1092→  1092→      this.pullTimer = null
+  1093→  1093→    }
+  1094→  1094→    if (this.connectivityCleanup) {
+  1095→  1095→      this.connectivityCleanup()
+  1096→  1096→      this.connectivityCleanup = null
+  1097→  1097→    }
+  1098→  1098→    // Note: we intentionally do NOT clear syncContext here so a restart
+  1099→  1099→    // of auto-sync (e.g. after a transient stop) still knows the org.
+  1100→  1100→  }
+  1101→  1101→
+  1102→  1102→  // ------------------------------------------
+  1103→  1103→  // Manual Sync
+  1104→  1104→  // ------------------------------------------
+  1105→  1105→
+  1106→  1106→  async manualSync(
+  1107→  1107→    orgId: string,
+  1108→  1108→    shopId?: string
+  1109→  1109→  ): Promise<{ pushResult: { synced: number; failed: number; conflicts: number }; pullResult: Record<string, { pulled: number; deleted: number }> }> {
+  1110→  1110→    if (typeof window === 'undefined') {
+  1111→  1111→      return {
+  1112→  1112→        pushResult: { synced: 0, failed: 0, conflicts: 0 },
+  1113→  1113→        pullResult: {},
+  1114→  1114→      }
+  1115→  1115→    }
+  1116→  1116→
+  1117→  1117→    console.log('[Sync] Manual sync triggered')
+  1118→  1118→
+  1119→  1119→    // Push first, then pull
+  1120→  1120→    const pushResult = await this.push()
+  1121→  1121→    const pullResult = await this.pullAll(orgId, shopId)
+  1122→  1122→
+  1123→  1123→    return { pushResult, pullResult }
+  1124→  1124→  }
+  1125→  1125→
+  1126→  1126→  // ------------------------------------------
+  1127→  1127→  // Outbox Item Management
+  1128→  1128→  // ------------------------------------------
+  1129→  1129→
+  1130→  1130→  /**
+  1131→  1131→   * Add an item to the outbox for syncing.
+  1132→  1132→   * Handles the edge case of offline create then offline delete.
+  1133→  1133→   */
+  1134→  1134→  async addToOutbox(item: Omit<OutboxItem, 'id' | 'createdAt' | 'retryCount' | 'status'>): Promise<OutboxItem> {
+  1135→  1135→    const dexieDb = getDexieDb()
+  1136→  1136→    if (!dexieDb) {
+  1137→  1137→      throw new Error('[Sync] Database not available')
+  1138→  1138→    }
+  1139→  1139→
+  1140→  1140→    // Edge case: Offline create then offline delete
+  1141→  1141→    if (item.operation === 'delete' && item.localId) {
+  1142→  1142→      await this.handleCreateDeleteCancellation(item.entity, item.localId, dexieDb)
+  1143→  1143→    }
+  1144→  1144→
+  1145→  1145→    const outboxItem: OutboxItem = {
+  1146→  1146→      ...item,
+  1147→  1147→      id: generateId(),
+  1148→  1148→      createdAt: new Date().toISOString(),
+  1149→  1149→      retryCount: 0,
+  1150→  1150→      status: 'pending',
+  1151→  1151→    }
+  1152→  1152→
+  1153→  1153→    await dexieDb.outbox.add(outboxItem)
+  1154→  1154→    console.log(`[Sync] Added to outbox: ${item.operation} ${item.entity}`)
+  1155→  1155→    this.notifyListeners()
+  1156→  1156→
+  1157→  1157→    return outboxItem
+  1158→  1158→  }
+  1159→  1159→
+  1160→  1160→  /**
+  1161→  1161→   * Handle the edge case where an item was created offline and then deleted offline.
+  1162→  1162→   * If we find a pending 'create' for the same entity+localId, we cancel both.
+  1163→  1163→   */
+  1164→  1164→  private async handleCreateDeleteCancellation(
+  1165→  1165→    entity: string,
+  1166→  1166→    localId: string,
+  1167→  1167→    dexieDb: NonNullable<ReturnType<typeof getDexieDb>>
+  1168→  1168→  ): Promise<void> {
+  1169→  1169→    try {
+  1170→  1170→      // Find a pending 'create' for the same entity and localId
+  1171→  1171→      const createItems: OutboxItem[] = await dexieDb.outbox
+  1172→  1172→        .where('entity')
+  1173→  1173→        .equals(entity)
+  1174→  1174→        .toArray()
+  1175→  1175→
+  1176→  1176→      const matchingCreate = createItems.find(
+  1177→  1177→        (item) =>
+  1178→  1178→          item.operation === 'create' &&
+  1179→  1179→          item.localId === localId &&
+  1180→  1180→          (item.status === 'pending' || item.status === 'syncing')
+  1181→  1181→      )
+  1182→  1182→
+  1183→  1183→      if (matchingCreate) {
+  1184→  1184→        // Remove both the create and skip adding the delete
+  1185→  1185→        await dexieDb.outbox.delete(matchingCreate.id)
+  1186→  1186→        console.log(
+  1187→  1187→          `[Sync] Cancelled create+delete for ${entity} localId=${localId}`
+  1188→  1188→        )
+  1189→  1189→      }
+  1190→  1190→    } catch (err) {
+  1191→  1191→      console.error('[Sync] Error checking create-delete cancellation:', err)
+  1192→  1192→    }
+  1193→  1193→  }
+  1194→  1194→
+  1195→  1195→  /**
+  1196→  1196→   * Discard a failed or conflicted outbox item.
+  1197→  1197→   */
+  1198→  1198→  async cancelOutboxItem(id: string): Promise<void> {
+  1199→  1199→    const dexieDb = getDexieDb()
+  1200→  1200→    if (!dexieDb) return
+  1201→  1201→
+  1202→  1202→    try {
+  1203→  1203→      const item = await dexieDb.outbox.get(id)
+  1204→  1204→      if (item && (item.status === 'failed' || item.status === 'conflict')) {
+  1205→  1205→        await dexieDb.outbox.delete(id)
+  1206→  1206→        console.log(`[Sync] Cancelled outbox item ${id}`)
+  1207→  1207→        this.notifyListeners()
+  1208→  1208→      } else if (item) {
+  1209→  1209→        console.warn(`[Sync] Cannot cancel item ${id} with status ${item.status}`)
+  1210→  1210→      }
+  1211→  1211→    } catch (err) {
+  1212→  1212→      console.error('[Sync] Error cancelling outbox item:', err)
+  1213→  1213→    }
+  1214→  1214→  }
+  1215→  1215→
+  1216→  1216→  /**
+  1217→  1217→   * Reset a failed item to pending and retry it immediately.
+  1218→  1218→   */
+  1219→  1219→  async retryOutboxItem(id: string): Promise<void> {
+  1220→  1220→    const dexieDb = getDexieDb()
+  1221→  1221→    if (!dexieDb) return
+  1222→  1222→
+  1223→  1223→    try {
+  1224→  1224→      const item = await dexieDb.outbox.get(id)
+  1225→  1225→      if (item && (item.status === 'failed' || item.status === 'conflict')) {
+  1226→  1226→        item.status = 'pending'
+  1227→  1227→        item.retryCount = 0
+  1228→  1228→        item.error = undefined
+  1229→  1229→        item.lastAttemptAt = null
+  1230→  1230→        await dexieDb.outbox.put(item)
+  1231→  1231→        console.log(`[Sync] Reset outbox item ${id} for retry`)
+  1232→  1232→        this.notifyListeners()
+  1233→  1233→
+  1234→  1234→        // Trigger a push to process this item
+  1235→  1235→        await this.push()
+  1236→  1236→      } else if (item) {
+  1237→  1237→        console.warn(`[Sync] Cannot retry item ${id} with status ${item.status}`)
+  1238→  1238→      }
+  1239→  1239→    } catch (err) {
+  1240→  1240→      console.error('[Sync] Error retrying outbox item:', err)
+  1241→  1241→    }
+  1242→  1242→  }
+  1243→  1243→
+  1244→  1244→  /**
+  1245→  1245→   * Get all outbox items with a given status.
+  1246→  1246→   */
+  1247→  1247→  async getOutboxItems(status?: OutboxItem['status']): Promise<OutboxItem[]> {
+  1248→  1248→    const dexieDb = getDexieDb()
+  1249→  1249→    if (!dexieDb) return []
+  1250→  1250→
+  1251→  1251→    try {
+  1252→  1252→      if (status) {
+  1253→  1253→        return dexieDb.outbox.where('status').equals(status).toArray()
+  1254→  1254→      }
+  1255→  1255→      return dexieDb.outbox.toArray()
+  1256→  1256→    } catch (err) {
+  1257→  1257→      console.error('[Sync] Error reading outbox items:', err)
+  1258→  1258→      return []
+  1259→  1259→    }
+  1260→  1260→  }
+  1261→  1261→
+  1262→  1262→  /**
+  1263→  1263→   * Clear all synced items from the outbox.
+  1264→  1264→   */
+  1265→  1265→  async clearSyncedItems(): Promise<number> {
+  1266→  1266→    const dexieDb = getDexieDb()
+  1267→  1267→    if (!dexieDb) return 0
+  1268→  1268→
+  1269→  1269→    try {
+  1270→  1270→      const syncedItems = await dexieDb.outbox
+  1271→  1271→        .where('status')
+  1272→  1272→        .equals('synced')
+  1273→  1273→        .toArray()
+  1274→  1274→
+  1275→  1275→      const ids = syncedItems.map((item) => item.id)
+  1276→  1276→      await dexieDb.outbox.bulkDelete(ids)
+  1277→  1277→
+  1278→  1278→      console.log(`[Sync] Cleared ${ids.length} synced items`)
+  1279→  1279→      this.notifyListeners()
+  1280→  1280→      return ids.length
+  1281→  1281→    } catch (err) {
+  1282→  1282→      console.error('[Sync] Error clearing synced items:', err)
+  1283→  1283→      return 0
+  1284→  1284→    }
+  1285→  1285→  }
+  1286→  1286→}
+  1287→  1287→
+  1288→  1288→// ============================================
+  1289→  1289→// Singleton
+  1290→  1290→// ============================================
+  1291→  1291→
+  1292→  1292→let _syncEngine: SyncEngine | null = null
+  1293→  1293→
+  1294→  1294→export function getSyncEngine(): SyncEngine {
+  1295→  1295→  if (typeof window === 'undefined') {
+  1296→  1296→    // Return a no-op engine on the server
+  1297→  1297→    return new SyncEngine()
+  1298→  1298→  }
+  1299→  1299→
+  1300→  1300→  if (!_syncEngine) {
+  1301→  1301→    _syncEngine = new SyncEngine()
+  1302→  1302→  }
+  1303→  1303→
+  1304→  1304→  return _syncEngine
+  1305→  1305→}
+  1306→  1306→
+  1307→  1307→// Lazy singleton — the engine is only instantiated when first accessed in the browser
+  1308→  1308→export const syncEngine: SyncEngine = typeof window !== 'undefined'
+  1309→  1309→  ? getSyncEngine()
+  1310→  1310→  : new SyncEngine()
+  1311→  1311→
+  1312→  1312→export { SyncEngine }
+  1313→  1313→

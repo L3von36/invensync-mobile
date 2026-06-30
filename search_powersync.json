@@ -1,0 +1,92 @@
+[
+  {
+    "url": "https://powersync.com/blog/offline-first-apps-with-tanstack-db-and-powersync",
+    "name": "Offline-First Apps with TanStack DB and PowerSync",
+    "snippet": "Build offline-first apps with TanStack DB and PowerSync, and learn a practical framework for handling sync conflicts, from sensible ...",
+    "host_name": "powersync.com",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.reddit.com/r/reactnative/comments/1qsthb7/offlinefirst_data_syncing_strategies",
+    "name": "Offline-first data syncing strategies? : r/reactnative - Reddit",
+    "snippet": "Sounds like Powersync would work well for you. I've used it before for an offline-first app. Was relatively easy to setup with sqlite and is the ...",
+    "host_name": "www.reddit.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://docs.boltai.com/blog/tech-stack-analysis-for-a-cross-platform-offline-first-ai-chat-client",
+    "name": "Tech Stack Analysis for a Cross-Platform Offline-First AI Chat Client",
+    "snippet": "The PowerSync service handles dynamic partial replication: it caches the relevant data and change history for each user/device in order to sync ...",
+    "host_name": "docs.boltai.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://github.com/payloadcms/payload/discussions/12506",
+    "name": "Local-First App with Zero sync or ElectricSQL & TanStackDB #12506",
+    "snippet": "TanStack DB is a new in-browser database from the TanStack Query team, tailored for live, offline-capable UIs: Live queries for sub-millisecond updates.",
+    "host_name": "github.com",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://queryplane.com/blog/powersync-offline-first-sync",
+    "name": "PowerSync: Offline-First Sync for Postgres - QueryPlane Blog",
+    "snippet": "Learn how PowerSync keeps client-side SQLite in sync with Postgres — sync rules, offline writes, client SDKs, and deployment options.",
+    "host_name": "queryplane.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://docs.expo.dev/guides/local-first",
+    "name": "Local-first architecture with Expo",
+    "snippet": "It now supports Offline Sync, which enables true local-first experiences. You can sync databases between local and remote sources with ...",
+    "host_name": "docs.expo.dev",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://community.flutterflow.io/libraries-showcase/post/now-available-powersync-library-for-offline-first-apps-EtpSK37IUPLCoVT",
+    "name": "Now available: PowerSync library for offline-first apps",
+    "snippet": "Use the PowerSync library to add an in-app SQLite database to your app that automatically syncs data from Supabase in real-time.",
+    "host_name": "community.flutterflow.io",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=SBv32tmyb3k",
+    "name": "How to build a local-first Notes App with Turso and Expo SQLite",
+    "snippet": "Work 100% offline with full read/write support · Sync data automatically when connectivity returns · Deliver native-speed database performance ...",
+    "host_name": "www.youtube.com",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://forum.dfinity.org/t/offline-first-web-apps-with-canister-backend-has-anyone-done-it/22439",
+    "name": "Offline-first web apps with canister backend, has anyone done it?",
+    "snippet": "Offline-first web apps often access and store the user's data in local a real-time db, then sync that to the cloud and, if applicable, from there to another ...",
+    "host_name": "forum.dfinity.org",
+    "rank": 8,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://rxdb.info/articles/offline-database.html",
+    "name": "The Ultimate Offline Database with Sync and Encryption - RxDB",
+    "snippet": "Discover how RxDB serves as a powerful offline database, offering real-time synchronization, secure encryption, and an offline-first ...",
+    "host_name": "rxdb.info",
+    "rank": 9,
+    "date": "",
+    "favicon": ""
+  }
+]

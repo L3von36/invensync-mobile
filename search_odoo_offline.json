@@ -1,0 +1,92 @@
+[
+  {
+    "url": "https://www.odoo.com/forum/help-1/working-with-odoo-offline-175842",
+    "name": "Working with Odoo offline",
+    "snippet": "The best way (cheapest and fastest) to use Odoo offline is to purchase a cellular based internet backup connection.\nThere is a way to fill the form offline and when the tablet or cellphone gets connected again send the data automatically to the server? Thanks in advance for your responses. The best way (cheapest and fastest) to use Odoo offline is to purchase a cellular based internet backup connection.",
+    "host_name": "www.odoo.com",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.odoo.com/forum/help-1/can-field-service-work-offline-then-synch-when-the-engineer-is-back-online-282009",
+    "name": "Can Field Service work offline? Then synch when the engineer is",
+    "snippet": "As a field service engineer I need to have access to my planning and the parts in my car (mobile warehouse) when I am offline, so that I can ...",
+    "host_name": "www.odoo.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.comstarusa.com/services/offline-application-for-odoo",
+    "name": "Customized Offline Mode for Odoo ERP by ComstarUSA",
+    "snippet": "This feature allows the user to request data synchronization with the Odoo server. The Offline application has a button to press to initiate this request. The ...\nComstar USA can provide an offline module through Odoo, an Enterprise Resource Planning (ERP) solution. This module allows you to work with your mobile phone even in a no-service area. When the device comes within a service area, it synchronizes with the Odoo server.",
+    "host_name": "www.comstarusa.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.odoo.com/forum/help-1/can-odoo-pos-work-without-internet-offline-mode-without-custom-module-303143",
+    "name": "Can Odoo POS work without internet (offline mode) without custom",
+    "snippet": "Yes, Odoo Point of Sale supports an offline mode by default. When the internet connection is lost, the POS automatically switches to offline ...",
+    "host_name": "www.odoo.com",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.reddit.com/r/Odoo/comments/1do75be/warehouse_management_offline",
+    "name": "Warehouse management offline : r/Odoo - Reddit",
+    "snippet": "The solution I envision is to develop a separate application that stores data in a local database and transfers the data to the Odoo database ...",
+    "host_name": "www.reddit.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=1Fz-BshnH4M",
+    "name": "Odoo Offline for Field Services: Empowering Technicians  - YouTube",
+    "snippet": "Explore Odoo Offline for Field Services, a groundbreaking module that empowers field technicians to work seamlessly in areas with limited or ...",
+    "host_name": "www.youtube.com",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.odoo.com/forum/help-1/crm-in-offline-mode-1659",
+    "name": "CRM in offline mode? - Odoo",
+    "snippet": "We have built a module for v13 that will allow sales person to work offline. The application works on both IOS and Android devices.",
+    "host_name": "www.odoo.com",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.comstar.com.pk/blog/odoo/offline-mode-for-crm-ecommerce-accounting-inventory",
+    "name": "Point of Sales & Field Service Management with Offline ERP Modules",
+    "snippet": "Once you enter a network service area and internet is restored, our offline mobile applications automatically synchronizes with Odoo. Thus, a ...",
+    "host_name": "www.comstar.com.pk",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.odoo.com/forum/help-1/how-is-the-point-of-sale-offline-mode-working-218314",
+    "name": "How is the Point of Sale “offline mode” working? - Odoo",
+    "snippet": "An “offline” feature was developed within the Point of Sale app. This allows you to sale in the POS frontend (cashier view) even if your Internet connection is ...",
+    "host_name": "www.odoo.com",
+    "rank": 8,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.odoo.com/documentation/master/applications/general/offline_mode.html",
+    "name": "Offline mode — Odoo master documentation",
+    "snippet": "Odoo supports offline access for apps and modules built using standard Odoo framework components. For performance reasons, Odoo allocates a maximum of 2 GB for offline data. When this limit is reached, the oldest data is removed to make room for the most recent activity.",
+    "host_name": "www.odoo.com",
+    "rank": 9,
+    "date": "",
+    "favicon": ""
+  }
+]

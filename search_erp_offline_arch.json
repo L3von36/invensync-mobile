@@ -1,0 +1,92 @@
+[
+  {
+    "url": "https://github.com/pazguille/offline-first",
+    "name": "Everything you need to know to create offline-first web apps. - GitHub",
+    "snippet": "Wraps IndexedDB, WebSQL, or localStorage using a simple but powerful API. remoteStorage: remoteStorage enabled apps automatically sync your data across all of ...",
+    "host_name": "github.com",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://dev.to/crisiscoresystems/offline-first-without-a-backend-a-local-first-pwa-architecture-you-can-trust-3j15",
+    "name": "Offline-first without a backend: building a local-first PWA you can",
+    "snippet": "A practical walkthrough of deterministic offline behavior, layered local storage, and honest trust boundaries—using the Pain Tracker repo as ...",
+    "host_name": "dev.to",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://news.ycombinator.com/item?id=28690427",
+    "name": "Offline First - Hacker News",
+    "snippet": "Doing offline-first well implies that the app has a (sqlite or similar) local database, does work on that database and periodically syncs the ...",
+    "host_name": "news.ycombinator.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.reddit.com/r/reactnative/comments/1qsthb7/offlinefirst_data_syncing_strategies",
+    "name": "Offline-first data syncing strategies? : r/reactnative - Reddit",
+    "snippet": "Sounds like Powersync would work well for you. I've used it before for an offline-first app. Was relatively easy to setup with sqlite and is the ...",
+    "host_name": "www.reddit.com",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://rxdb.info/offline-first.html",
+    "name": "Local First / Offline First | RxDB - JavaScript Database",
+    "snippet": "Local-First software stores data on client devices for seamless offline and online functionality, enhancing user experience and efficiency.",
+    "host_name": "rxdb.info",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://wild.codes/candidate-toolkit-question/how-would-you-architect-a-pwa-for-offline-first-and-real-time-sync",
+    "name": "How would you architect a PWA for offline-first and real-time sync?",
+    "snippet": "Build a production-grade PWA architecture that combines offline-first UX, robust caching strategies, real-time data sync, and safe push notifications.",
+    "host_name": "wild.codes",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://stackoverflow.com/questions/59031717/difference-in-offline-first-approach-and-pwas",
+    "name": "Difference in offline-first approach and PWAs? - Stack Overflow",
+    "snippet": "PWAs, thanks to the Service Worker and caching strategies, are able to implement/provide an offline first approach by caching target assets or data responses.",
+    "host_name": "stackoverflow.com",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://oluwadaprof.medium.com/building-an-offline-first-pwa-notes-app-with-next-js-indexeddb-and-supabase-f861aa3a06f9",
+    "name": "Building an Offline-First PWA Notes App with Next.js, IndexedDB",
+    "snippet": "This article focuses on architecture, data flow, and synchronization strategies, not just UI. Architecture Overview. At a high level, the ...",
+    "host_name": "oluwadaprof.medium.com",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://forum.ionicframework.com/t/offline-data-app-architecture/215294",
+    "name": "Offline data app architecture - Ionic Framework",
+    "snippet": "It's a nice library that uses IndexedDB for storing offline data as objects, so you don't need stringify objects and store in localstorage.",
+    "host_name": "forum.ionicframework.com",
+    "rank": 8,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://blog.logrocket.com/offline-first-frontend-apps-2025-indexeddb-sqlite",
+    "name": "Offline-first frontend apps in 2025: IndexedDB and SQLite in the",
+    "snippet": "Syncs to a remote database when online; Resolves conflicts with a last-write-wins strategy. Below are the key pieces of the architecture.",
+    "host_name": "blog.logrocket.com",
+    "rank": 9,
+    "date": "",
+    "favicon": ""
+  }
+]

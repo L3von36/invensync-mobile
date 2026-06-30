@@ -1,0 +1,92 @@
+[
+  {
+    "url": "https://www.linkedin.com/pulse/why-odoo-18-ditched-localstorage-indexeddb-offline-shekh-warak-iqwoe",
+    "name": "Why Odoo 18 Ditched LocalStorage for IndexedDB - LinkedIn",
+    "snippet": "The shift from LocalStorage to IndexedDB is a significant step forward for Odoo, especially for businesses relying on its POS module.",
+    "host_name": "www.linkedin.com",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.odoo.com/forum/help-1/what-s-the-mechanism-of-pos-offline-283217",
+    "name": "What's the mechanism of POS offline? - Odoo",
+    "snippet": "Orders created during offline mode are saved locally as unsynced data. You cannot open a new POS session without internet—only existing sessions ...",
+    "host_name": "www.odoo.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.reddit.com/r/Odoo/comments/1qmeh5m/in_theory_we_can_make_odoo_pos_a_fully_offline",
+    "name": "In Theory, We Can make Odoo POS a Fully Offline Standalone App",
+    "snippet": "It can work offline and store all data locally in the browser local storage. When the internet is back, it syncs back to odoo in the cloud.\nIt can work offline and store all data locally in the browser local storage. When the internet is back, it syncs back to odoo in the cloud. The ...",
+    "host_name": "www.reddit.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=mv76_puyn0o",
+    "name": "How to Create Customer in POS Offline Mode | Odoo App  - YouTube",
+    "snippet": "With the Point of Sale (POS) Offline Customer Creation app in #Odoo, you can easily create new customers even when you're offline.",
+    "host_name": "www.youtube.com",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://medium.com/@adamrackis/making-your-web-app-work-offline-with-service-workers-and-indexeddb-6ce9c538c48",
+    "name": "Making your web app work offline, with Service Workers and",
+    "snippet": "This post will walk you through making a web app work offline. It assumes a working knowledge of service workers and IndexedDB.",
+    "host_name": "medium.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.odoo.com/forum/help-1/pos-where-does-the-data-store-when-you-work-in-offline-mode-v8-81892",
+    "name": "POS Where does the data store when you work in offline mode? V8",
+    "snippet": "When the POS module is started everything is loaded in the cache thanks to the javascript framework that is implemented (backbonejs). This gets ...",
+    "host_name": "www.odoo.com",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.cybrosys.com/blog/how-to-use-local-storage-and-session-storage-for-offline-functionalities-in-odoo-19",
+    "name": "How to use Local Storage and Session Storage for Offline",
+    "snippet": "Improve Odoo 19 web apps with Local Storage and Session Storage. Learn how to store browser data and enable offline functionality easily.",
+    "host_name": "www.cybrosys.com",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://stackoverflow.com/questions/21583977/working-on-openerp-in-offline-mode",
+    "name": "Working on openerp in offline mode - Stack Overflow",
+    "snippet": "It allows you to store data locally in the web browser. Your implementation will be responsible for data retrieval at startup and for data ...",
+    "host_name": "stackoverflow.com",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.odoo.com/forum/help-1/odoo-offline-functionality-301786",
+    "name": "Odoo Offline Functionality",
+    "snippet": "Odoo does not provide native offline functionality, except for the Point of Sale (POS) module, which genuinely supports offline mode using ...",
+    "host_name": "www.odoo.com",
+    "rank": 8,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://github.com/odoo/odoo/issues/189836",
+    "name": "[18.0] POS - indexedDB and server data (sync_from_ui) are in conflict",
+    "snippet": "Odoo will first try to restore the orders from indexedDB, and this works fine. However, if using pos_restaurant and pressing a table, sync_from_ui is also ...\nI am trying to understand the process of how data is loaded into IndexedDB within Odoo 16 POS for offline functionality. Could you please ...",
+    "host_name": "github.com",
+    "rank": 9,
+    "date": "",
+    "favicon": ""
+  }
+]
