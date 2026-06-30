@@ -1,0 +1,92 @@
+[
+  {
+    "url": "https://developers.sap.com/tutorials/sdk-android-wizard-app-offline..html",
+    "name": "Offline-Enable Your Android Application | SAP Tutorials",
+    "snippet": "Enable offline OData in your Android application, resulting in an application that can be used without a network connection and that performs data requests ...\nThe application allows users to make changes against a local offline store and synchronize manually at any time. The sync operation is ...",
+    "host_name": "developers.sap.com",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=DyLQXl4TMwY",
+    "name": "Making your Mobile's App Data Available Offline - YouTube",
+    "snippet": "... Offline OData capabilities of SAP Mobile Services and the SAP native SDKs (SAP BTP SDK for iOS & Android). This video will give you a higher ...",
+    "host_name": "www.youtube.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://community.sap.com/t5/technology-blogs-by-sap/creating-an-offline-app-with-the-mobile-service-for-sap-fiori-part-1/bc-p/13324114",
+    "name": "Creating an offline app with the mobile service for SAP Fiori – Part 1",
+    "snippet": "This blog focuses on creating an 'offline' mobile application with the mobile service for SAP Fiori, a service on SAP Cloud Platform.\nThis blog focuses on creating an 'offline' mobile application you need to synchronize between the online and offline data sources regularly",
+    "host_name": "community.sap.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.reddit.com/r/androiddev/comments/v3h66s/how_do_you_design_offline_capability_with_sync",
+    "name": "How do you design offline capability with sync with the backend?",
+    "snippet": "We save to the local database first, then attempt to sync to the backend, with failure assumed, meaning we'll attempt a sync later anyway. Sync ...",
+    "host_name": "www.reddit.com",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://developer.android.com/topic/architecture/data-layer/offline-first",
+    "name": "Build an offline-first app | App architecture - Android Developers",
+    "snippet": "If, when offline, the app writes data locally that is misaligned with the network data source, you must resolve the conflict before synchronization can happen.",
+    "host_name": "developer.android.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.neptune-software.com/run-mobile-in-offline",
+    "name": "Offline SAP Mobile Apps – Work Anywhere with Neptune",
+    "snippet": "Offline-first architecture and caching controls. · Full control over sync logic, timing, and retries. · Works on iOS, Android, rugged, and web devices.\nBuild offline SAP mobile apps with Neptune. Keep teams productive without signal, sync data to ECC or S/4HANA, and work securely anywhere.",
+    "host_name": "www.neptune-software.com",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://community.sap.com/t5/technology-q-a/offline-mdk-app-automatic-synchronization/qaq-p/12338956",
+    "name": "Offline MDK app: automatic synchronization - SAP Community",
+    "snippet": "I have a button to launch the synchronization: I refresh my app and upload changes to the back-end when I click on the sync Button. I would like to do this ...",
+    "host_name": "community.sap.com",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.desino.be/en/blog/mobile-app-with-offline-access-and-synchronization",
+    "name": "Mobile App with Offline Access and Synchronization for Remote",
+    "snippet": "A mobile app with offline access and synchronization allows teams to stay productive even when connectivity is unavailable.\nOffline sync allows a mobile app to work without an internet connection by storing data locally on the device, then automatically updating the ...",
+    "host_name": "www.desino.be",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://medium.com/@saritasa/how-we-added-offline-sync-to-a-mobile-app-without-breaking-everything-1b739c23a23b",
+    "name": "How We Added Offline Sync to a Mobile App — Without Breaking",
+    "snippet": "Here's how we made that happen in an iOS app, starting from intercepting failed network calls to handling sync conflicts across devices.\nWhen syncing, we go top-down: Sync account-level data; Sync each profile, unless deleted; Then sync the data within each profile (which can be ...",
+    "host_name": "medium.com",
+    "rank": 8,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://success.outsystems.com/documentation/outsystems_developer_cloud/building_apps/data_management/offline_data_synchronization_in_mobile_apps",
+    "name": "Offline data synchronization in mobile apps - ODC Documentation",
+    "snippet": "This lets you work with data even when disconnected from the internet and synchronize changes with the server when connectivity is restored.",
+    "host_name": "success.outsystems.com",
+    "rank": 9,
+    "date": "",
+    "favicon": ""
+  }
+]

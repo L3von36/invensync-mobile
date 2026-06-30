@@ -1,0 +1,92 @@
+[
+  {
+    "url": "https://help.shopify.com/en/manual/sell-in-person/shopify-pos/selling-offline/offline-payments",
+    "name": "Accepting card payments offline using Shopify POS",
+    "snippet": "To accept card payments when offline, you need to activate offline payments in your Shopify admin. Card payments are captured after your device reconnects to ...\nStep 1: Activate offline payments · From your Shopify admin, go to Point of Sale > Settings . · In the Customization section, click POS app to open the POS editor ...",
+    "host_name": "help.shopify.com",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://community.shopify.com/t/how-do-you-handle-offline-pos-orders-during-internet-outages/203388",
+    "name": "How do you handle offline POS orders during internet outages?",
+    "snippet": "At this time, it is not possible to process credit/debit payments offline on Shopify Point of Sale. Shopify Point of Sale needs an internet connection.\nShopify Point of Sale needs an internet connection to sync with your Shopify admin, send receipts by email, and take card payments. I recommend ...",
+    "host_name": "community.shopify.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://help.shopify.com/en/manual/sell-in-person/shopify-pos/selling-offline/offline-checkout",
+    "name": "Offline checkout on Shopify POS",
+    "snippet": "When you reconnect to the internet after being offline, your orders and inventory should sync automatically between Shopify POS and your Shopify admin. If your ...\nFrom the POS app, tap the Connectivity Icon icon, and then deactivate Force offline checkout. From the cart, tap Go online in the offline checkout banner.",
+    "host_name": "help.shopify.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://community.shopify.com/t/how-do-you-handle-payments-without-wifi-at-crowded-events/6018",
+    "name": "How do you handle payments without WiFi at crowded events?",
+    "snippet": "While it is possible to use the POS offline to process non-card transactions, it would be necessary to have an internet connection at the time ...\nLikely as you're aware, the native Shopify POS does not allow offline transactions, so absent wifi and cellular connectivity, we are unable to ...",
+    "host_name": "community.shopify.com",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=sQSWF7E8oWE",
+    "name": "Unleashing the Potential: Offline Mode in Shopify POS - YouTube",
+    "snippet": "Data Synchronization and Security Offline mode in Shopify POS goes beyond simple transaction processing; it also includes robust data ...\nShopify POS Demo Link: https://pxl.to/yt-shopify-demo Shopify POS Facebook Group: https://www.facebook.com/groups/myshopifypos In today's ...",
+    "host_name": "www.youtube.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.reddit.com/r/shopify/comments/1my0hbi/issue_with_shopify_pos_app_no_internet_connection",
+    "name": "Issue with Shopify POS app 'No internet connection' - Reddit",
+    "snippet": "I usually have to reboot my device several times and sometimes need to clear the app cache to get it to work. There is no issue with the ...\nI usually have to reboot my device several times and sometimes need to clear the app cache to get it to work. It works when i connect via ...",
+    "host_name": "www.reddit.com",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.connectpos.com/does-shopify-pos-work-offline-how-your-business",
+    "name": "Does Shopify POS Work Offline? How Your Business Can Make The",
+    "snippet": "Yes, Shopify POS does work offline. Even if your internet connection drops, the system lets you continue processing sales without immediate disruptions.\nThe offline mode works with card swipes, chips, and tap payments. You'll need the internet to process gift cards or type in card numbers ...\nOnce your internet returns, the system automatically uploads all offline sales data to your main Shopify account. This sync updates your overall ...",
+    "host_name": "www.connectpos.com",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.firstpier.com/resources/shopify-pos-offline-mode",
+    "name": "Shopify POS Offline Mode: What Works, What Doesn't, and How to",
+    "snippet": "Here's how to manually trigger synchronization if needed: The simplest method is to swipe down on your orders screen within the Shopify POS app.\nFor businesses using multiple devices in Shopify POS offline mode, each iPad or phone syncs independently. If you have three devices that were ...",
+    "host_name": "www.firstpier.com",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.shopify.com/ae/blog/offline-payments",
+    "name": "What Are Offline Payments? How to Accept Them (2025) - Shopify",
+    "snippet": "Learn how offline payments let merchants accept card payments during internet outages and keep sales flowing with Shopify POS.",
+    "host_name": "www.shopify.com",
+    "rank": 8,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://help.shopify.com/en/manual/sell-in-person/shopify-pos/selling-offline",
+    "name": "Using Shopify POS offline",
+    "snippet": "Using Shopify POS offline. Shopify POS needs an internet connection to sync with your Shopify admin, send receipts by email, and capture card payments.",
+    "host_name": "help.shopify.com",
+    "rank": 9,
+    "date": "",
+    "favicon": ""
+  }
+]

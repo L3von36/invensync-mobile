@@ -1,0 +1,92 @@
+[
+  {
+    "url": "https://learn.microsoft.com/en-us/power-apps/mobile/mobile-offline-works-overview",
+    "name": "How mobile offline works in Power Apps - Microsoft Learn",
+    "snippet": "The sync process keeps offline data up to date ... Changes made when network is online are saved locally and instantly synced to Dataverse.\nThis feature uses a local database on the device to store data. When your device is connected to a network, any writes made in the app sync to ...",
+    "host_name": "learn.microsoft.com",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://community.dynamics.com/blogs/post/?postid=645c478c-b337-4a1e-8725-b2d956572f40",
+    "name": "Dynamics 365 – Mobile Offline",
+    "snippet": "The Dynamics 365 mobile offline feature utilizes Azure to make data available for offline use. Meaning a copy of your data capable of being synchronized ...",
+    "host_name": "community.dynamics.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://msdynamicsworld.com/story/get-know-microsoft-dynamics-365-mobile-offline-first",
+    "name": "Get to know Microsoft Dynamics 365 Mobile offline-first",
+    "snippet": "This offline experience helps users to perform CRUD operations on their data when they have no network connection.",
+    "host_name": "msdynamicsworld.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://dynamicscommunities.com/ug/power-platform-ug/offline-first-smarter-mobile-experiences-with-power-apps",
+    "name": "Offline-First, Smarter Mobile Experiences with Power Apps",
+    "snippet": "The new offline database sync feature gives developers more control over how data is stored, accessed, and updated when users are offline.",
+    "host_name": "dynamicscommunities.com",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=HrILchHvMUA",
+    "name": "Model Driven Power Apps FULL COURSE for Beginners [UPDATED",
+    "snippet": "Model-driven Power Apps are database applications that can manage end-to-end business data and processes at scale - think of things that run ...",
+    "host_name": "www.youtube.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://moniperez.medium.com/mobile-offline-first-experience-for-model-driven-apps-2ce876974b81",
+    "name": "Mobile Offline-first experience for model driven Apps",
+    "snippet": "Mobile offline is offline-first by default · Your data is always the same, regardless of your network connection. · There's no toggle for users to ...\nWith the new mobile offline functionality, it will not be necessary to be connected to the internet during the whole process, but it will be ...",
+    "host_name": "moniperez.medium.com",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://netwiseglobal.com/blog/whats-new-in-microsoft-dynamics-365-field-service-mobile-2025-guide",
+    "name": "What's new in Microsoft Dynamics 365 Field Service Mobile? (2025",
+    "snippet": "The latest Field Service update introduces a game-changing level of control: selective offline table column synchronization. Now, you can ...",
+    "host_name": "netwiseglobal.com",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://technologyblog.rsmus.com/industry/business-and-professional-services/selecting-specific-fields-to-include-in-mobile-offline-sync-in-dynamics-365-field-service",
+    "name": "Selecting Specific Fields to Include in Mobile Offline Sync in",
+    "snippet": "Improved User Experience: Downloading only relevant fields leads to a faster offline synchronization which leads to less user wait time for the ...",
+    "host_name": "technologyblog.rsmus.com",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.inogic.com/blog/2022/03/how-to-enable-model-driven-apps-for-offline-use",
+    "name": "How to enable model-driven apps for offline use - Inogic",
+    "snippet": "In Dynamics 365 CRM there are some tables that are enabled by default for mobile offline use. 1. Navigate to powerapps.com and log in with your ...",
+    "host_name": "www.inogic.com",
+    "rank": 8,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://synoptek.com/insights/it-blogs/5-best-offline-features-of-dynamics365-offline",
+    "name": "Best Offline Features of Dynamics 365 - Synoptek",
+    "snippet": "Changes made while offline are stored locally, and as soon as you connect to the server again, the changes are automatically synchronized with the Dynamics 365 ...",
+    "host_name": "synoptek.com",
+    "rank": 9,
+    "date": "",
+    "favicon": ""
+  }
+]

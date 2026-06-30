@@ -1,0 +1,92 @@
+[
+  {
+    "url": "https://www.servicetitan.com/features/field-mobile-app",
+    "name": "Field Service Mobile App | All-in-one app for Technicians",
+    "snippet": "A modern, native field service app for technicians — built to work faster, offline, and in sync across teams.",
+    "host_name": "www.servicetitan.com",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://help.servicetitan.com/docs/servicetitan-field-mobile-app-offline-capabilities",
+    "name": "ServiceTitan Field Mobile App offline capabilities",
+    "snippet": "The ServiceTitan Field Mobile App keeps technicians productive even without an internet connection. Most core job actions—updating job status, ...",
+    "host_name": "help.servicetitan.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=f7KWEqbGGLk",
+    "name": "The New Field Mobile App Is Here! - YouTube",
+    "snippet": "List of features currently in the app: https://help.servicetitan.com/resources/field-mobile-app-and-legacy-servicetitan-mobile-comparison KB ...",
+    "host_name": "www.youtube.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://play.google.com/store/apps/details?id=com.servicetitan.work&hl=en_US",
+    "name": "ServiceTitan Field - Apps on Google Play",
+    "snippet": "Quickly build estimates in the field, record completed work with photos and forms, and take payment to close out the job.",
+    "host_name": "play.google.com",
+    "rank": 3,
+    "date": "Jun 24, 2026",
+    "favicon": ""
+  },
+  {
+    "url": "https://help.servicetitan.com/docs/field-mobile-app-and-legacy-servicetitan-mobile-comparison",
+    "name": "Field Mobile App and ServiceTitan Mobile Functionality Comparison",
+    "snippet": "The following table compares functionality between the Field Mobile App (iOS / Android) and the legacy app (ServiceTitan Mobile). Anything ...",
+    "host_name": "help.servicetitan.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://help.servicetitan.com/docs/field-mobile-app-faq",
+    "name": "ServiceTitan Field Mobile App FAQ",
+    "snippet": "Different notification messages appear in the Field Mobile App when you take actions that require an internet connection while you're offline.",
+    "host_name": "help.servicetitan.com",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://help.servicetitan.com/docs/explore-the-main-layout-of-fma",
+    "name": "Explore the main layout of the ServiceTitan Field Mobile App",
+    "snippet": "While data is syncing in the background, a Refresh in progress indicator appears below Today's schedule and disappears when the sync completes.",
+    "host_name": "help.servicetitan.com",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://technologyblog.rsmus.com/industry/business-and-professional-services/selecting-specific-fields-to-include-in-mobile-offline-sync-in-dynamics-365-field-service",
+    "name": "Selecting Specific Fields to Include in Mobile Offline Sync in",
+    "snippet": "Navigate to the Field Service Mobile app under the Apps section in the left-hand vertical pane. Go to Settings in the top-left corner of the ...",
+    "host_name": "technologyblog.rsmus.com",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=QPTOc8D9xmM",
+    "name": "Discover the Field Mobile App: Less Screen Time, More Wrench Time",
+    "snippet": "The future of field work is in your pocket. In this episode, we talk with David Erickson, who leads all things mobile at ServiceTitan, ...",
+    "host_name": "www.youtube.com",
+    "rank": 8,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://apps.apple.com/us/app/servicetitan-field/id1629928933",
+    "name": "ServiceTitan Field - App Store",
+    "snippet": "SEAMLESS END TO END WORKFLOWS ServiceTitan's Field App syncs automatically with the office, streamlining workflows, schedules, and job details to keep your team ...",
+    "host_name": "apps.apple.com",
+    "rank": 9,
+    "date": "",
+    "favicon": ""
+  }
+]

@@ -1,0 +1,92 @@
+[
+  {
+    "url": "https://docs.oracle.com/en/cloud/paas/mobile-cloud/mcsua/data-offline-and-sync.html",
+    "name": "15 Data Offline and Sync - Oracle Help Center",
+    "snippet": "You can use the following APIs to build applications that cache REST resources for offline use and then synchronize all offline changes with the server when ...",
+    "host_name": "docs.oracle.com",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=hZjqrz8bi6Q",
+    "name": "MCS: 53. Overview of the Data Offline & Synchronization API",
+    "snippet": "Mobile users expect responsive applications that can also work offline. In this Oracle Mobile Cloud Service episode we explore how the data ...",
+    "host_name": "www.youtube.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://docs.oracle.com/middleware/maf233/mobile/develop-maf/GUID-97DDFDB9-3C87-46F1-8CD2-7858C326ED61.htm",
+    "name": "Using Oracle Mobile Cloud Service Platform APIs in a MAF Application",
+    "snippet": "This chapter describes how to use Oracle Mobile Cloud Service (MCS) platform APIs, such as the Storage API, update user information, plus send analytics",
+    "host_name": "docs.oracle.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://docs.oracle.com/en/solutions/learn-about-apis-for-mobile-apps/understand-oracle-mobile-cloud-environment1.html",
+    "name": "Understand the Oracle Mobile Hub Environment",
+    "snippet": "You can use one or more of the built-in platform APIs that provide services such as notifications, location services, storage, offline and sync, and database ...",
+    "host_name": "docs.oracle.com",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://fishbowlsolutions.com/2017/09/accelerated-mobile-app-development-oracle-mobile-cloud-service-part-2",
+    "name": "Accelerated Mobile App Development with Oracle Mobile Cloud",
+    "snippet": "With the platform API's providing database & content storage capabilities, push notifications, offline syncing, and built-in analytics,",
+    "host_name": "fishbowlsolutions.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=SGQHHRYUIN0",
+    "name": "MCS: 56. Working with Custom APIs via Data Offline & Sync - YouTube",
+    "snippet": "Oracle Mobile Cloud Service custom APIs allow you to build any REST services and payloads you desire. In order for the custom API services ...",
+    "host_name": "www.youtube.com",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://github.com/Huachao/azure-content/blob/master/articles/app-service-mobile/app-service-mobile-offline-data-sync.md",
+    "name": "Offline Data Sync in Azure Mobile Apps - GitHub",
+    "snippet": "Offline data sync is a client and server SDK feature of Azure Mobile Apps that makes it easy for developers to create apps that are functional without a ...",
+    "host_name": "github.com",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://success.outsystems.com/documentation/outsystems_developer_cloud/building_apps/data_management/offline_data_synchronization_in_mobile_apps",
+    "name": "Offline data synchronization in mobile apps - ODC Documentation",
+    "snippet": "OutSystems Developer Cloud (ODC) enables offline access and data synchronization for mobile apps and PWAs. Data is stored locally in an SQLite ...\nData is stored locally in an SQLite database. Your mobile app only needs network connectivity to access server data and logic. When you install ...",
+    "host_name": "success.outsystems.com",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.reddit.com/r/webdev/comments/13amw3q/suggestions_for_offlinefirst_mobileweb_relational",
+    "name": "Suggestions for offline-first mobile/web relational database in 2023?",
+    "snippet": "If you really, really don't want to do that, then you're probably looking at a local SQLite database, and some custom logic to push/pull rows ...",
+    "host_name": "www.reddit.com",
+    "rank": 8,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://forum.ionicframework.com/t/offline-first-app-development-local-storage-server-sync/206316",
+    "name": "Offline-first app development (local storage + server sync) - Ionic Vue",
+    "snippet": "Hi. I am working on an offline first app in PWA, using my home-brew sync mechanism (not fully two way) using Ionic Storage and Firebase.",
+    "host_name": "forum.ionicframework.com",
+    "rank": 9,
+    "date": "",
+    "favicon": ""
+  }
+]

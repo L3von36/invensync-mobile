@@ -1,0 +1,92 @@
+[
+  {
+    "url": "https://doc.toasttab.com/doc/platformguide/adminOfflineModeOverview.html",
+    "name": "Offline mode overview - - Platform guide - Toast platform docs -",
+    "snippet": "With offline mode with local sync, Toast devices use the local hub device as the communication point between all Toast devices on a local network. For example, ...",
+    "host_name": "doc.toasttab.com",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://doc.toasttab.com/doc/platformguide/platformOfflineModeLocalSync.html",
+    "name": "Offline mode with local sync - Toast platform docs -",
+    "snippet": "Offline mode with local sync uses a Toast device as the point of connection, or the local hub device, between all devices on a restaurant's local network.",
+    "host_name": "doc.toasttab.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=watcrk5O2eU",
+    "name": "What Can Toast POS Do in Offline Mode? - YouTube",
+    "snippet": "Learn what Toast devices can and cannot do in Offline Mode.",
+    "host_name": "www.youtube.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://community.toasttab.com/t5/restaurant-operations/the-3-dots-on-the-log-in-screen-are-an-attractive-nuisance/m-p/3849",
+    "name": "Re: The 3 Dots on the Log In Screen are an attractive nuisance",
+    "snippet": "The POS Devices are just tablets, therefore just as your phone or tablet offoads unecessary data from the paging file(files that are ncecessary ...",
+    "host_name": "community.toasttab.com",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.blogicsystems.com/blog/toast-pos-alternatives",
+    "name": "Toast POS Alternatives for Restaurants - BLogic Systems",
+    "snippet": "What stands out against Toast is the offline setup. Blogic keeps the POS running even if the internet drops, then syncs data after the ...",
+    "host_name": "www.blogicsystems.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://doc.toasttab.com/doc/platformguide/platformOfflineMode.html",
+    "name": "Offline mode - - Platform guide - Toast platform docs -",
+    "snippet": "Offline mode indicates Toast devices communicate with each other through the Toast platform cloud-based services. Important. If the restaurant cannot ...",
+    "host_name": "doc.toasttab.com",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.reddit.com/r/ToastPOS/comments/1qosgko/thinking_of_switching_to_toast_how_often_does_the",
+    "name": "thinking of switching to toast. how often does the internet go down",
+    "snippet": "You have offline mode, which keeps your POS running although you won't recieve online or 3rd party orders. The system going completely down or ...",
+    "host_name": "www.reddit.com",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://support.toasttab.com/en/article/Using-Toast-in-Offline-Mode",
+    "name": "Use Toast in Offline Mode",
+    "snippet": "Offline Mode is the state your Toast devices enter automatically when they lose connection to the internet, your local network, or the Toast ...",
+    "host_name": "support.toasttab.com",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://support.toasttab.com/en/article/Order-Pay-During-Offline-Mode",
+    "name": "Outages and Disruptions: Toast Mobile Order & Pay®",
+    "snippet": "When your restaurant is in Offline Mode, your guests can: Use Toast Mobile Order & Pay® to view a menu; Use Toast Mobile Order & Pay® to pay ...",
+    "host_name": "support.toasttab.com",
+    "rank": 8,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://loman.ai/blog/toast-pos-vs-micros",
+    "name": "Toast POS vs MICROS: 2026 Restaurant System Guide - Loman AI",
+    "snippet": "Toast's fully functional offline mode—uncommon among cloud-based competitors—ensures operations continue during internet outages, addressing a critical ...",
+    "host_name": "loman.ai",
+    "rank": 9,
+    "date": "",
+    "favicon": ""
+  }
+]

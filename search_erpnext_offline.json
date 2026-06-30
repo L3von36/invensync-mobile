@@ -1,0 +1,92 @@
+[
+  {
+    "url": "https://www.dolibarr.org",
+    "name": "Dolibarr Open Source ERP and CRM - Web suite for business",
+    "snippet": "One web suite to manage all of your business. An all-in-one suite Dolibarr, easy to use ERP and CRM software for businesses.",
+    "host_name": "www.dolibarr.org",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.reddit.com/r/selfhosted/comments/19bl2oc/dolibarr_vs_erpnext",
+    "name": "Dolibarr VS ERPNext : r/selfhosted - Reddit",
+    "snippet": "Dolibarr simplifies the user experience by providing relevant content directly on the clicked page, while ERPNext often requires multiple clicks ...",
+    "host_name": "www.reddit.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.dolibarr.org/forum/t/use-dolibarr-offline-with-a-cloud-backup/19064",
+    "name": "Use dolibarr offline with a cloud backup",
+    "snippet": "Is there a way to sync the files daily without backing up everything? Because internet here is slow and I would like to rely on my LAN and keep ...",
+    "host_name": "www.dolibarr.org",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=K2gxjQmVuRs",
+    "name": "Best Free ERP Software for 2025: ERPNext vs Odoo vs  - YouTube",
+    "snippet": "Explore the best free ERP software options for your business. This video compares ERPNext, Odoo, Dolibarr, and SAP. Learn what each platform ...",
+    "host_name": "www.youtube.com",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://sourceforge.net/projects/dolibarr",
+    "name": "Dolibarr ERP - CRM download | SourceForge.net",
+    "snippet": "Dolibarr ERP - CRM is an easy to use ERP and CRM open source software package (run with a web php server or as standalone software) for businesses, foundations ...",
+    "host_name": "sourceforge.net",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://discuss.frappe.io/t/standalone-pos-with-local-db-to-sync-with-master-db/116137",
+    "name": "Standalone POS with Local DB to sync with Master DB - ERPNext",
+    "snippet": "We are planning to start work on a standalone POS which can use a local db to have a stable and robust offline pos function.",
+    "host_name": "discuss.frappe.io",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.appvizer.com/magazine/operations/erp/dolibarr-vs-erpnext",
+    "name": "Dolibarr vs ERPNext: which open source ERP to choose? - Appvizer",
+    "snippet": "ERPNext is a complete open source ERP developed by Frappe Technologies. Designed for SMEs, but also capable of scaling up to more complex ...",
+    "host_name": "www.appvizer.com",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://apps.apple.com/cd/app/mobile-client-for-erpnext/id6479046579?see-all=customers-also-bought-apps&platform=iphone",
+    "name": "‎Mobile Client for ERPNext - You Might Also Like - App Store",
+    "snippet": "Mobile Client for ERPNext. You Might Also Like. View. BS ERP Companion ... DoliApp: Dolibarr ERP CRM. Client, product, quote & more · View. OC Mobile App.",
+    "host_name": "apps.apple.com",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://thetechclouds.com/erpnext-vs-dolibarr-choosing-best-erp-sme-in-2025",
+    "name": "ERPNext vs Dolibarr: Which is Best for SMEs in 2025?",
+    "snippet": "ERPNext offers support through phone, online, knowledge base, and video tutorials. On the other hand, Dolibarr offers support only through phone ...",
+    "host_name": "thetechclouds.com",
+    "rank": 8,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=fom0HuLPFnY&vl=en-US",
+    "name": "ERPNext vs Dolibarr (2026) | Which One is Better? - YouTube",
+    "snippet": "... open-source ERP breakdowns. Links and free resources are in the description! #ERPNext #Dolibarr #OpenSource #ERP #BusinessSoftware #CRM #Tech.",
+    "host_name": "www.youtube.com",
+    "rank": 9,
+    "date": "",
+    "favicon": ""
+  }
+]

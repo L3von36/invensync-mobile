@@ -1,0 +1,92 @@
+[
+  {
+    "url": "https://www.onsightapp.com/user-guide/how-to-send-orders-to-zoho-when-you-are-offline",
+    "name": "How to send orders to Zoho when you are offline | User Guide",
+    "snippet": "This article explains how you can capture orders in the Onsight mobile app when you are offline, and how those orders later sync through into Zoho Inventory ...",
+    "host_name": "www.onsightapp.com",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://help.zoho.com/portal/en/kb/fsm/mobilize-your-workforce/articles/using-fsm-mobile-offline",
+    "name": "Using FSM Mobile Offline - Zoho Cares",
+    "snippet": "The offline mode of the Zoho FSM Mobile app enables you to access the data in your mobile app even when the internet connectivity is poor or non-existent.",
+    "host_name": "help.zoho.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=AHreicUN2b8",
+    "name": "Access FSM Data Without Internet Connection in the Mobile App",
+    "snippet": "In this video, learn how Offline Mode in the Zoho FSM mobile app helps field agents stay productive in remote locations—even without ...",
+    "host_name": "www.youtube.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://help.zoho.com/portal/en/kb/creator/developer-guide/mobile/articles/adding-and-managing-offline-components",
+    "name": "Adding and managing offline components - Zoho Cares",
+    "snippet": "By default, the Zoho Creator mobile app automatically syncs offline components every 24 hours to ensure they remain consistent with their live counterparts.",
+    "host_name": "help.zoho.com",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.zoho.com/en-in/pos/resources/help/view-transactions.html",
+    "name": "View transactions and synchronize offline bills - Zoho POS",
+    "snippet": "The app also supports offline billing, where transactions are marked as offline until the internet connection is restored. To synchronize ...",
+    "host_name": "www.zoho.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.zoho.com/us/inventory",
+    "name": "Online inventory management for businesses - Zoho",
+    "snippet": "Sell on multiple channels and track all your sales within Zoho Inventory. Integrate multiple sales channels; Sync stock effortlessly; Handle multiple currencies ...\nKnow your inventory and grow your business · Accurate stock tracking with barcode and RFID system · Track items based on batches and serial numbers · Sell at your ...",
+    "host_name": "www.zoho.com",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://help.zoho.com/portal/en/community/topic/access-data-offline-in-the-zoho-fsm-mobile-app-combat-connectivity-challenges",
+    "name": "Access Data Offline in the Zoho FSM Mobile App | Combat",
+    "snippet": "To be able to use the Zoho FSM mobile app in the offline mode, the necessary app data need to be cached and stored in the device's internal storage. The ...",
+    "host_name": "help.zoho.com",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://play.google.com/store/apps/details?id=com.zoho.inventory&hl=en_US",
+    "name": "Inventory Management App -Zoho - Apps on Google Play",
+    "snippet": "Zoho Inventory is a powerful and easy-to-use inventory and order management app designed for businesses of all sizes to meet their end-to-end inventory ...",
+    "host_name": "play.google.com",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=rEo_89YTd98",
+    "name": "Zoho Inventory | A Complete Walkthrough - YouTube",
+    "snippet": "This demonstration of Zoho Inventory will give you an in-depth look at managing your offline and online orders with our efficient order ...",
+    "host_name": "www.youtube.com",
+    "rank": 8,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://help.zoho.com/portal/en/community/topic/zoho-books-offline",
+    "name": "Zoho Books Offline",
+    "snippet": "We regret to inform you that currently we don't have the option to Open the mobile app in offline mode. ... Zoho CRM does have an offline version on mobile.\nYou will have to be connected to the internet to be able to use it. We do not have an offline version at the moment. Sorry about disappointing you on this front ...",
+    "host_name": "help.zoho.com",
+    "rank": 9,
+    "date": "",
+    "favicon": ""
+  }
+]

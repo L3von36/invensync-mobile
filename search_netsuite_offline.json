@@ -1,0 +1,92 @@
+[
+  {
+    "url": "https://forum.ionicframework.com/t/working-offline-mode-synchronization-ionic-3/123715",
+    "name": "Working offline mode, + synchronization (ionic 3)",
+    "snippet": "I want to work my app on offline (sqlite) and sync the data to my database.I found PouchDB which works as a local storage and sync with CouchDB( ...",
+    "host_name": "forum.ionicframework.com",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://docs.oracle.com/en/cloud/paas/mobile-cloud/mcsua/data-offline-and-sync.html",
+    "name": "15 Data Offline and Sync - Oracle Help Center",
+    "snippet": "Mobile app developers can use the Data Offline and Sync features to build a client app that enables the users to perform critical tasks when offline.",
+    "host_name": "docs.oracle.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://stackoverflow.com/questions/15689287/android-application-offline-mode-local-sqlite-database-synchronisation-with-dis",
+    "name": "android application offline mode, local sqlite database",
+    "snippet": "I have a postgreSql database which is manipulated by an android application via Web Services. I'd like to know what is the best way to make an offline mode for ...",
+    "host_name": "stackoverflow.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.facebook.com/groups/selftaughtprogrammers/posts/1524739937889735",
+    "name": "How to develop offline mobile apps with local data storage - Facebook",
+    "snippet": "SQLite and AWS Amplify are popular solutions for offline data storage in standalone mobile apps. Ryan Rutkin. I would look into AWS ...",
+    "host_name": "www.facebook.com",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.sqliteforum.com/p/building-offline-first-applications",
+    "name": "Building Offline-First Applications with SQLite and Sync Strategies",
+    "snippet": "In this guide, we'll explore how to build offline-first applications and implement reliable syncing strategies to cloud or server databases.",
+    "host_name": "www.sqliteforum.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://docs.oracle.com/en/cloud/saas/netsuite/ns-online-help/article_0327040215.html",
+    "name": "FSM Mobile Troubleshooting and Tips - NetSuite - Oracle Help Center",
+    "snippet": "If the Offline indicator appears, technicians can continue working. However, they must reconnect and allow changes to sync before refreshing the app.",
+    "host_name": "docs.oracle.com",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://success.outsystems.com/documentation/outsystems_developer_cloud/building_apps/data_management/offline_data_synchronization_in_mobile_apps",
+    "name": "Offline data synchronization in mobile apps - ODC Documentation",
+    "snippet": "ODC provides a robust framework for implementing offline data synchronization in mobile apps. Data is stored locally in an SQLite database.",
+    "host_name": "success.outsystems.com",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=UNR1aphXtjI",
+    "name": "Learn to Create Online-Offline Data Storage Capable  - YouTube",
+    "snippet": "Storage of data is a core part of many applications. Historically, when you ask developers about databases, they will talk to you about ...",
+    "host_name": "www.youtube.com",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.reddit.com/r/Netsuite/comments/1gh9prj/using_erp_offline",
+    "name": "Using ERP offline : r/Netsuite - Reddit",
+    "snippet": "NO in 2024 a cloud-based SaaS solution that requires fast Internet is NOT designed to have an offline/sync mode. Yes you could build this ...",
+    "host_name": "www.reddit.com",
+    "rank": 8,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://dev.to/anurag_dev/implementing-offline-first-architecture-in-flutter-part-1-local-storage-with-conflict-resolution-4mdl",
+    "name": "Offline-First Architecture in Flutter: Part 1 — SQLite Local Storage",
+    "snippet": "The app will store data locally using SQLite, handle conflicts intelligently, and sync seamlessly when connectivity is restored. Think of it as ...",
+    "host_name": "dev.to",
+    "rank": 9,
+    "date": "",
+    "favicon": ""
+  }
+]

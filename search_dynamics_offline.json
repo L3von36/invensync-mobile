@@ -1,0 +1,92 @@
+[
+  {
+    "url": "https://learn.microsoft.com/en-us/dynamics365/field-service/mobile/best-practices-limitations-offline-profile",
+    "name": "Best practices and limitations for the offline profile | Microsoft Learn",
+    "snippet": "Learn how to use the mobile offline profile to make the best use of the Field Service mobile app when your field technicians don't have Internet access.",
+    "host_name": "learn.microsoft.com",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://learn.microsoft.com/en-us/dynamics365/field-service/mobile/work-offline",
+    "name": "Work offline and update offline data | Microsoft Learn",
+    "snippet": "When the device connects to the internet, data automatically syncs with the server. you can manually synchronize if needed.",
+    "host_name": "learn.microsoft.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://community.dynamics.com/blogs/post/?postid=645c478c-b337-4a1e-8725-b2d956572f40",
+    "name": "Dynamics 365 – Mobile Offline",
+    "snippet": "The Dynamics 365 mobile offline feature utilizes Azure to make data available for offline use. Meaning a copy of your data capable of being synchronized ...",
+    "host_name": "community.dynamics.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.microsoft.com/en-us/dynamics-365/blog/it-professional/2025/01/29/mobile-offline-data-application-insights",
+    "name": "Mobile Offline Data Monitoring with Application Insights - Microsoft",
+    "snippet": "Offline sync performance are query leveraging existing ODATA end points to investigate slow-running queries that be overly complex.",
+    "host_name": "www.microsoft.com",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://community.powerplatform.com/forums/thread/details/?threadid=0d73b71c-81d9-4615-b6fa-b67809522104",
+    "name": "Power Apps mobile app experience in offline mode (Model-driven",
+    "snippet": "The offline capabilities of the app allow users to continue interacting with the app and accessing data even when they are not connected to the internet.",
+    "host_name": "community.powerplatform.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.microsoft.com/en-us/dynamics-365/blog/it-professional/2023/11/10/best-practices-for-offline-mode-in-the-field-service-mobile-app-part-3",
+    "name": "Best Practices for Offline Mode in the Field Service mobile app - Part 3",
+    "snippet": "The offline sync client uses Dataverse change tracking to find updated records to download. Even a minor change to one column will trigger the ...",
+    "host_name": "www.microsoft.com",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://msdynamicsworld.com/story/get-know-microsoft-dynamics-365-mobile-offline-first",
+    "name": "Get to know Microsoft Dynamics 365 Mobile offline-first",
+    "snippet": "This offline experience helps users to perform CRUD operations on their data when they have no network connection.",
+    "host_name": "msdynamicsworld.com",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=8woU3V8RAfE",
+    "name": "Dynamics 365 Sales Mobile Offline - YouTube",
+    "snippet": "Learn How to Access Dynamics 365 CRM Mobile Dynamics 365 Sales Mobile Offline Access allows users to work with the Dynamics 365 Sales app ...",
+    "host_name": "www.youtube.com",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.microsoft.com/en-us/dynamics-365/blog/it-professional/2023/11/06/best-practices-for-offline-mode-in-the-field-service-mobile-app-part-1",
+    "name": "Best Practices for Offline Mode in the Field Service mobile app - Part 1",
+    "snippet": "This is a 3-part blog series aimed to get the maximum benefits of using the Field Service mobile application in the 'Offline' mode.",
+    "host_name": "www.microsoft.com",
+    "rank": 8,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://synoptek.com/insights/it-blogs/5-best-offline-features-of-dynamics365-offline",
+    "name": "Best Offline Features of Dynamics 365 - Synoptek",
+    "snippet": "With Dynamics 365 Offline, you can view your Dynamics 365 contacts, review and add new notes, edit records, and do a whole lot more without the need to connect ...",
+    "host_name": "synoptek.com",
+    "rank": 9,
+    "date": "",
+    "favicon": ""
+  }
+]

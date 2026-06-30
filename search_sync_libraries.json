@@ -1,0 +1,92 @@
+[
+  {
+    "url": "https://medium.com/@husnainsardar07/local-database-options-for-offline-functionality-in-react-native-apps-359dc669fb73",
+    "name": "Choosing the Optimal Local Database for Offline React Native",
+    "snippet": "While AsyncStorage, SQLite, Realm, and PouchDB each have their strengths, WatermelonDB offers the best balance of performance, scalability, and ...",
+    "host_name": "medium.com",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.reddit.com/r/reactnative/comments/19110rj/react_native_sqlite_vs_realm_vs_watermelondb_vs",
+    "name": "React Native SQLite vs Realm vs WatermelonDB vs op-sqlite - Reddit",
+    "snippet": "Some of these are really solving different problems, Realm isn't relational, Realm and Watermelon both offer syncing, but for me were so much ...",
+    "host_name": "www.reddit.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.pkgpulse.com/guides/expo-sqlite-vs-watermelondb-vs-realm-react-native-local-2026",
+    "name": "Expo SQLite vs WatermelonDB vs Realm 2026 — PkgPulse Guides",
+    "snippet": "Expo SQLite vs WatermelonDB vs Realm for React Native local databases in 2026. Offline sync, performance, lazy loading, TypeScript models, and ...",
+    "host_name": "www.pkgpulse.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://stackshare.io/stackups/pouchdb-vs-watermelondb",
+    "name": "Pouchdb vs WatermelonDB | What are the differences? - StackShare",
+    "snippet": "PouchDB excels in distributed database replication, query capabilities, and data synchronization performance, while WatermelonDB shines in its integration with ...\nPouchDB enables applications to store data locally while offline, then synchronize it with CouchDB and compatible servers when the application is back online, ...",
+    "host_name": "stackshare.io",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.clariontech.com/blog/right-database-for-react-native-app",
+    "name": "Choosing the Right Database for React Native Apps",
+    "snippet": "What are the different React native databases available for use? 1. MMKV Storage; 2. Realm Database; 3. SQLite; 4. Firebase; 5. Watermelon DB; 6. PouchDB; 7.",
+    "host_name": "www.clariontech.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://webmobtech.com/blog/6-top-react-native-app-database",
+    "name": "6 Top Local Databases For React Native App Development",
+    "snippet": "This Blog will assist you in selecting the most appropriate local database for React Native App Development:1. Firebase 2.Realm 3.SQLite 4.",
+    "host_name": "webmobtech.com",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://sourceforge.net/software/product/WatermelonDB/alternatives",
+    "name": "Best WatermelonDB Alternatives & Competitors - SourceForge",
+    "snippet": "Compare the best WatermelonDB alternatives in 2026. Explore user reviews, ratings, and pricing of alternatives and competitors to WatermelonDB.",
+    "host_name": "sourceforge.net",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.sitepoint.com/create-an-offline-first-react-native-app-using-watermelondb",
+    "name": "Create an Offline-first React Native App Using WatermelonDB",
+    "snippet": "WatermelonDB provides a synchronization engine that can be integrated with your backend. It uses a pull-push mechanism, where changes are pulled ...",
+    "host_name": "www.sitepoint.com",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://rxdb.info/alternatives.html",
+    "name": "Alternatives for realtime offline-first JavaScript applications - RxDB",
+    "snippet": "WatermelonDB is a reactive & asynchronous JavaScript database. While originally made for React and React Native, it can also be used with other ...",
+    "host_name": "rxdb.info",
+    "rank": 8,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://dev.to/fasthedeveloper/watermelondb-expo-sdk-54-the-complete-mobile-offline-first-setup-guide-that-actually-works-5he5",
+    "name": "WatermelonDB + Expo SDK 54: The Complete Mobile Offline-First",
+    "snippet": "Best for: Teams already in the TanStack ecosystem who want an open-source path. The Comparison Table. WatermelonDB, PowerSync, ElectricSQL + ...\nIt streams filtered subsets of data to clients, where it lands in SQLite. Reads sync automatically. Writes go through your own backend API. The ...",
+    "host_name": "dev.to",
+    "rank": 9,
+    "date": "",
+    "favicon": ""
+  }
+]

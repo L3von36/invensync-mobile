@@ -1,0 +1,92 @@
+[
+  {
+    "url": "https://developers.sap.com/tutorials/sdk-android-wizard-app-offline..html",
+    "name": "Offline-Enable Your Android Application | SAP Tutorials",
+    "snippet": "Step 1. Generate and run an offline app · Step 2. Examine the encryption key · Step 3. Examine the defining queries · Step 4. Examine the offline ...",
+    "host_name": "developers.sap.com",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=DyLQXl4TMwY",
+    "name": "Making your Mobile's App Data Available Offline - YouTube",
+    "snippet": "In this video we will explore the Offline OData capabilities of SAP Mobile Services and the SAP native SDKs (SAP BTP SDK for iOS & Android).",
+    "host_name": "www.youtube.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://developers.sap.com/tutorials/fiori-ios-hcpms-offline-odata-introduction..html",
+    "name": "Introduction to Offline OData | SAP Tutorials",
+    "snippet": "Synchronize OData services and run them locally on a device · UltraLite as client database, which is optionally encrypted · Optimized for OData ...",
+    "host_name": "developers.sap.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://s5consulting.no/sap-btp-mobility-mdk-offline-odata",
+    "name": "SAP BTP Mobility in 2026: Has MDK Closed the Offline Gap?",
+    "snippet": "The Offline OData engine at the heart of SAP Mobile Services is not a cache. It is a full OData client running against an encrypted relational ...",
+    "host_name": "s5consulting.no",
+    "rank": 3,
+    "date": "Jun 22, 2026",
+    "favicon": ""
+  },
+  {
+    "url": "https://stackoverflow.com/questions/54942518/is-it-possible-to-flush-refresh-specific-offline-odata-entities-in-sap-cloud-pla",
+    "name": "Is it possible to flush/refresh specific offline oData entities in SAP",
+    "snippet": "The standard flush/Refresh offline oData functions are performed on all entities in the offline Store. This, of course, has implications on mobile data and ...",
+    "host_name": "stackoverflow.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://community.sap.com/t5/technology-q-a/demystifying-the-sapofflineodata-frameworks/qaq-p/12107584",
+    "name": "Demystifying the SAPOfflineOData frameworks - SAP Community",
+    "snippet": "Hi folks, we are now looking to move one of our App from Online to Offline. I got a couple of questions to make sure I understand well how ...",
+    "host_name": "community.sap.com",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://github.com/SAP-archive/cloud-sdk-android-offline-odata/blob/main/DOCUMENTATION.md",
+    "name": "cloud-sdk-android-offline-odata/DOCUMENTATION.md at main",
+    "snippet": "The below code snippet shows how to add a new defining query to an already open store, followed by the required download operation. The defining ...",
+    "host_name": "github.com",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://community.sap.com/t5/technology-q-a/mdk-online-offline-retain-data/qaq-p/13662669",
+    "name": "MDK Online Offline retain data - SAP Community",
+    "snippet": "With Offline OData service, you may initially download backend data or a subset of backend data to your device during application initialization ...",
+    "host_name": "community.sap.com",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.thesiliconpartners.com/sap/sap-business-technology-platform/sap-mobile-technologies",
+    "name": "SAP Mobile Technologies | The Silicon Partners",
+    "snippet": "SAP Mobile Development Kit (MDK) extends SAP Mobile Services and SAP Web IDE/SAP Business Application Studio to provide a complete set of mobile app development ...",
+    "host_name": "www.thesiliconpartners.com",
+    "rank": 8,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://discovery-center.cloud.sap/serviceCatalog/mobile-services",
+    "name": "SAP Mobile Services - SAP Discovery Center",
+    "snippet": "SAP Mobile Services is the channel for mobile development through SAP Build Code. Developers can build and deploy native apps using the Mobile Development Kit.",
+    "host_name": "discovery-center.cloud.sap",
+    "rank": 9,
+    "date": "",
+    "favicon": ""
+  }
+]

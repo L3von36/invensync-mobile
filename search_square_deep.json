@@ -1,0 +1,92 @@
+[
+  {
+    "url": "https://squareup.com/help/us/en/article/7777-process-card-payments-with-offline-mode",
+    "name": "Process offline payments | Square Support Center - United States",
+    "snippet": "Offline payments will process automatically when you reconnect your device to the internet within 24 hours (no later than 72 hours). Before you begin. You can ...\nOffline payments are securely stored in your point of sale app while your device is offline. Offline payments will process automatically when you reconnect ...",
+    "host_name": "squareup.com",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://developer.squareup.com/docs/mobile-payments-sdk/ios/offline-payments",
+    "name": "Offline Payments - Square Developer",
+    "snippet": "The reader must be connected to a device that was online and had its POS application opened within the last 24 hours. The POS device must have a bluetooth ...\nOffline payments are stored (queued) locally on the mobile device running the Mobile Payments SDK application and processed by Square the next time the ...",
+    "host_name": "developer.squareup.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://squareup.com/us/en/the-bottom-line/managing-your-finances/offline-credit-card-processing",
+    "name": "Offline Credit Card Processing | Square",
+    "snippet": "Once your device goes offline, you have 24 hours after accepting your first offline payment to reconnect and sync the payments you took while offline.\nLog in to your Square account on the Point of Sale app and tap the menu icon. · Tap More > Settings > Checkout > Offline Payments. · Review the information and ...\nOffline payments are automatically processed when your device has connectivity again. Once your device goes offline, you have 24 hours after accepting your ...",
+    "host_name": "squareup.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.facebook.com/groups/795642191387813/posts/1325232425095451",
+    "name": "Why does Square Stand go offline with hotspot? - Facebook",
+    "snippet": "Square's offline feature allows transactions to process later, but must be enabled and connected within 24 hours; alternatives like Cash App and ...",
+    "host_name": "www.facebook.com",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.youtube.com/shorts/j--COv54Yyo",
+    "name": "How to accept offline payments on your Square hardware - YouTube",
+    "snippet": ": You must reconnect to the internet within 24 hours after taking an offline payment ... Offline payments are processed automatically when your ...\n... offline transactions. Offline payments are processed automatically when your device regains connectivity, and will expire if not processed ...",
+    "host_name": "www.youtube.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.tiktok.com/@square/video/7348933357583043883",
+    "name": "Take payments anywhere—even when the wifi's down. Offline",
+    "snippet": "Please note: You must reconnect to the internet within 24 hours after taking an offline payment to upload any offline transactions. Offline ...",
+    "host_name": "www.tiktok.com",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://squareup.com/us/en/press/square-brings-offline-payments",
+    "name": "Square Brings Offline Payments to All Hardware Devices, Around",
+    "snippet": "Offline transactions are processed seamlessly; once a seller is back online, Square automatically uploads and processes all offline sales. While ...",
+    "host_name": "squareup.com",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.electronicpaymentsinternational.com/news/square-brings-offline-payments-to-all-devices",
+    "name": "Square brings offline payments to all devices",
+    "snippet": "Sellers can activate offline payments anytime in their Square settings, or in the moment when their Square point of sale detects a connectivity ...\nOffline payments, Square's no-connection-required solution to deliver continuous commerce connectivity, is now available to Square sellers using every hardware ...\nSellers can activate offline payments anytime in their Square settings, or in the moment when their Square point of sale detects a ...",
+    "host_name": "www.electronicpaymentsinternational.com",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://community.squareup.com/t5/Hardware-Setup-Troubleshooting/How-to-process-Offline-payments/td-p/797335",
+    "name": "How to process Offline payments - The Square Community",
+    "snippet": "Once you reconnect your device to the internet, payments will show as completed and will be visible from your Square Dashboard. Failed payments ...",
+    "host_name": "community.squareup.com",
+    "rank": 8,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.reddit.com/r/SquareOfficial/comments/1s4b28a/58_offline_transactions_declined_when_connected",
+    "name": "58 Offline Transactions declined when connected to wifi / Square",
+    "snippet": "I connected them to wifi (at home) within 20min of final transaction. No transaction processed, all say declined due to offline payments without ...",
+    "host_name": "www.reddit.com",
+    "rank": 9,
+    "date": "",
+    "favicon": ""
+  }
+]
