@@ -1,0 +1,1533 @@
+     1→'use client'
+     2→
+     3→import { useState, useEffect, useCallback } from 'react'
+     4→import { authFetch } from '@/lib/auth-fetch'
+     5→import { usePageSearch } from '@/hooks/use-page-search'
+     6→import { useForm } from 'react-hook-form'
+     7→import { zodResolver } from '@/lib/zod-resolver'
+     8→import {
+     9→  Plus,
+    10→  Search,
+    11→  Pencil,
+    12→  Trash2,
+    13→  Eye,
+    14→  Package,
+    15→  Loader2,
+    16→  ChevronLeft,
+    17→  ChevronRight,
+    18→  Upload,
+    19→  X,
+    20→  ArrowUpDown,
+    21→  ArrowLeft,
+    22→  MoreHorizontal,
+    23→  QrCode,
+    24→  FileDown,
+    25→} from 'lucide-react'
+    26→import { toast } from 'sonner'
+    27→import { api, type Product, type ProductType, type AttributeDefinition, type StockMovement } from '@/lib/api-client'
+    28→import { productRepo, categoryRepo } from '@/lib/repositories'
+    29→import { db, type LocalProduct } from '@/lib/db'
+    30→import { BarcodeDialog } from '@/components/app/products/barcode-dialog'
+    31→import { BulkImportDialog } from '@/components/app/products/bulk-import-dialog'
+    32→import { useAuthStore } from '@/lib/stores/auth-store'
+    33→import { getNetworkErrorMessage } from '@/lib/validation'
+    34→import { formatETB, formatDate } from '@/lib/format'
+    35→import { productSchema, type ProductFormData } from '@/lib/validations'
+    36→import { ErrorState, EmptyState } from '@/components/shared/error-states'
+    37→import { FormInputField, FormTextareaField, FormSelectField } from '@/components/shared/form-fields'
+    38→import { Form } from '@/components/ui/form'
+    39→
+    40→import { Button } from '@/components/ui/button'
+    41→import { Input } from '@/components/ui/input'
+    42→import { Label } from '@/components/ui/label'
+    43→import { Badge } from '@/components/ui/badge'
+    44→import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+    45→import { Switch } from '@/components/ui/switch'
+    46→import { Separator } from '@/components/ui/separator'
+    47→import {
+    48→  Dialog,
+    49→  DialogContent,
+    50→  DialogDescription,
+    51→  DialogFooter,
+    52→  DialogHeader,
+    53→  DialogTitle,
+    54→} from '@/components/ui/dialog'
+    55→import {
+    56→  AlertDialog,
+    57→  AlertDialogAction,
+    58→  AlertDialogCancel,
+    59→  AlertDialogContent,
+    60→  AlertDialogDescription,
+    61→  AlertDialogFooter,
+    62→  AlertDialogHeader,
+    63→  AlertDialogTitle,
+    64→} from '@/components/ui/alert-dialog'
+    65→import {
+    66→  Select,
+    67→  SelectContent,
+    68→  SelectItem,
+    69→  SelectTrigger,
+    70→  SelectValue,
+    71→} from '@/components/ui/select'
+    72→import {
+    73→  Table,
+    74→  TableBody,
+    75→  TableCell,
+    76→  TableHead,
+    77→  TableHeader,
+    78→  TableRow,
+    79→} from '@/components/ui/table'
+    80→import { Skeleton } from '@/components/ui/skeleton'
+    81→import {
+    82→  DropdownMenu,
+    83→  DropdownMenuContent,
+    84→  DropdownMenuItem,
+    85→  DropdownMenuTrigger,
+    86→} from '@/components/ui/dropdown-menu'
+    87→
+    88→// ============================================
+    89→// Helpers
+    90→// ============================================
+    91→function getStockStatus(
+    92→  quantity: number,
+    93→  lowStockThreshold: number
+    94→): { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' } {
+    95→  if (quantity <= 0) return { label: 'Out of Stock', variant: 'destructive' }
+    96→  if (quantity <= lowStockThreshold) return { label: 'Low Stock', variant: 'secondary' }
+    97→  return { label: 'In Stock', variant: 'default' }
+    98→}
+    99→
+   100→/** Safely parse attribute options that may be double-encoded */
+   101→function parseAttributeOptions(raw: string | null | undefined): string[] | null {
+   102→  if (!raw) return null
+   103→  try {
+   104→    const parsed = JSON.parse(raw)
+   105→    if (Array.isArray(parsed)) {
+   106→      return parsed
+   107→    } else if (typeof parsed === 'string') {
+   108→      // Handle double-encoded: "Red,Blue,Green" instead of ["Red","Blue","Green"]
+   109→      return parsed.split(',').map((s: string) => s.trim()).filter(Boolean)
+   110→    }
+   111→    return null
+   112→  } catch {
+   113→    // If parsing fails, try splitting by comma
+   114→    return raw.split(',').map(s => s.trim()).filter(Boolean)
+   115→  }
+   116→}
+   117→
+   118→/** Map an API Product to a LocalProduct for IndexedDB storage */
+   119→function mapToLocalProduct(p: Product): LocalProduct {
+   120→  return {
+   121→    id: p.id,
+   122→    productTypeId: p.productTypeId,
+   123→    organizationId: p.organizationId,
+   124→    shopId: (p as Record<string, unknown>).shopId as string | null ?? null,
+   125→    sku: p.sku ?? null,
+   126→    name: p.name,
+   127→    description: p.description ?? null,
+   128→    imageUrl: p.imageUrl ?? null,
+   129→    quantity: p.quantity,
+   130→    costPrice: p.costPrice,
+   131→    sellingPrice: p.sellingPrice,
+   132→    lowStockThreshold: p.lowStockThreshold,
+   133→    isActive: p.isActive,
+   134→    createdAt: p.createdAt,
+   135→    updatedAt: p.updatedAt,
+   136→  }
+   137→}
+   138→
+   139→// ============================================
+   140→// Create/Edit Product Dialog
+   141→// ============================================
+   142→function ProductDialog({
+   143→  open,
+   144→  onOpenChange,
+   145→  product,
+   146→  productTypes,
+   147→  onSaved,
+   148→}: {
+   149→  open: boolean
+   150→  onOpenChange: (open: boolean) => void
+   151→  product: Product | null
+   152→  productTypes: ProductType[]
+   153→  onSaved: () => void
+   154→}) {
+   155→  const { currentOrg, currentShop } = useAuthStore()
+   156→  const [saving, setSaving] = useState(false)
+   157→  const [imagePreview, setImagePreview] = useState<string | null>(null)
+   158→  const [attributeValues, setAttributeValues] = useState<Record<string, string>>({})
+   159→  const [attrErrors, setAttrErrors] = useState<Record<string, string>>({})
+   160→  const isEditing = !!product
+   161→
+   162→  // Separate state to track selected product type ID reliably
+   163→  const [selectedTypeId, setSelectedTypeId] = useState<string>('')
+   164→
+   165→  const form = useForm<ProductFormData>({
+   166→    resolver: zodResolver(productSchema),
+   167→    defaultValues: {
+   168→      productTypeId: '',
+   169→      name: '',
+   170→      sku: '',
+   171→      description: '',
+   172→      costPrice: undefined as unknown as number,
+   173→      sellingPrice: undefined as unknown as number,
+   174→      lowStockThreshold: 10,
+   175→      quantity: 0,
+   176→    },
+   177→  })
+   178→
+   179→  // Watch productTypeId for reactive UI
+   180→  const watchedProductTypeId = form.watch('productTypeId')
+   181→
+   182→  // Use selectedTypeId as the source of truth (falls back to form value)
+   183→  const activeTypeId = selectedTypeId || watchedProductTypeId
+   184→  const selectedType = productTypes.find((pt) => pt.id === activeTypeId)
+   185→  const typeAttributes = selectedType?.attributes || []
+   186→
+   187→  // Reset form when dialog opens
+   188→  useEffect(() => {
+   189→    if (open) {
+   190→      setAttrErrors({})
+   191→      if (product) {
+   192→        const attrVals: Record<string, string> = {}
+   193→        product.attributeValues?.forEach((av) => {
+   194→          attrVals[av.attributeDefinitionId] = av.value
+   195→        })
+   196→        setAttributeValues(attrVals)
+   197→        setSelectedTypeId(product.productTypeId)
+   198→        form.reset({
+   199→          productTypeId: product.productTypeId,
+   200→          name: product.name,
+   201→          sku: product.sku || '',
+   202→          description: product.description || '',
+   203→          costPrice: product.costPrice,
+   204→          sellingPrice: product.sellingPrice,
+   205→          lowStockThreshold: product.lowStockThreshold,
+   206→          quantity: product.quantity,
+   207→        })
+   208→        setImagePreview(product.imageUrl || null)
+   209→      } else {
+   210→        setAttributeValues({})
+   211→        setSelectedTypeId('')
+   212→        form.reset({
+   213→          productTypeId: '',
+   214→          name: '',
+   215→          sku: '',
+   216→          description: '',
+   217→          costPrice: undefined as unknown as number,
+   218→          sellingPrice: undefined as unknown as number,
+   219→          lowStockThreshold: 10,
+   220→          quantity: 0,
+   221→        })
+   222→        setImagePreview(null)
+   223→      }
+   224→    } else {
+   225→      // Clean up state when dialog closes
+   226→      setSelectedTypeId('')
+   227→      setAttributeValues({})
+   228→      setAttrErrors({})
+   229→      setImagePreview(null)
+   230→    }
+   231→  }, [open, product, form])
+   232→
+   233→  // Generate a preview SKU from the product type name + product count
+   234→  const generateSkuPreview = (typeName: string) => {
+   235→    const abbr = (typeName || 'PRD').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4)
+   236→    const rand = Math.floor(Math.random() * 900 + 100) // 3-digit random for preview
+   237→    return `${abbr}-${rand}`
+   238→  }
+   239→
+   240→  // Handle product type selection
+   241→  const handleSelectType = (typeId: string) => {
+   242→    setSelectedTypeId(typeId)
+   243→    form.setValue('productTypeId', typeId, { shouldValidate: true, shouldDirty: true, shouldTouch: true })
+   244→    // Auto-generate SKU preview when type is selected (only for new products)
+   245→    if (!isEditing) {
+   246→      const pt = productTypes.find((p) => p.id === typeId)
+   247→      if (pt) {
+   248→        form.setValue('sku', generateSkuPreview(pt.name), { shouldDirty: true })
+   249→      }
+   250→    }
+   251→    // Clear attribute values when switching types
+   252→    setAttributeValues({})
+   253→    setAttrErrors({})
+   254→  }
+   255→
+   256→  const updateAttributeValue = (attrId: string, value: string) => {
+   257→    setAttributeValues((prev) => ({ ...prev, [attrId]: value }))
+   258→    setAttrErrors((prev) => {
+   259→      const next = { ...prev }
+   260→      delete next[`attr_${attrId}`]
+   261→      return next
+   262→    })
+   263→  }
+   264→
+   265→  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+   266→    const file = e.target.files?.[0]
+   267→    if (!file) return
+   268→    const reader = new FileReader()
+   269→    reader.onloadend = () => {
+   270→      const base64 = reader.result as string
+   271→      setImagePreview(base64)
+   272→      typeAttributes
+   273→        .filter((a) => a.fieldType === 'image')
+   274→        .forEach((a) => {
+   275→          updateAttributeValue(a.id, base64)
+   276→        })
+   277→    }
+   278→    reader.readAsDataURL(file)
+   279→  }
+   280→
+   281→  const onSubmit = async (data: ProductFormData) => {
+   282→    if (!currentOrg) return
+   283→
+   284→    // Use selectedTypeId as the authoritative source for productTypeId
+   285→    const productTypeId = selectedTypeId || data.productTypeId || activeTypeId
+   286→    if (!productTypeId) {
+   287→      toast.error('Please select a product type')
+   288→      return
+   289→    }
+   290→
+   291→    // Safely convert form values to numbers (form may store them as strings from input onChange)
+   292→    const costPrice = Number(data.costPrice)
+   293→    const sellingPrice = Number(data.sellingPrice)
+   294→    const lowStockThreshold = Number(data.lowStockThreshold) || 10
+   295→    const quantity = Number(data.quantity) || 0
+   296→
+   297→    // Validate converted numbers
+   298→    if (!costPrice || Number.isNaN(costPrice) || costPrice <= 0) {
+   299→      toast.error('Cost price must be a valid number greater than 0')
+   300→      return
+   301→    }
+   302→    if (!sellingPrice || Number.isNaN(sellingPrice) || sellingPrice <= 0) {
+   303→      toast.error('Selling price must be a valid number greater than 0')
+   304→      return
+   305→    }
+   306→
+   307→    setSaving(true)
+   308→    try {
+   309→      const attrVals = Object.entries(attributeValues)
+   310→        .filter(([, value]) => value.trim() !== '')
+   311→        .map(([attributeDefinitionId, value]) => ({
+   312→          attributeDefinitionId,
+   313→          value,
+   314→        }))
+   315→
+   316→      if (isEditing && product) {
+   317→        const result = await api.updateProduct(product.id, currentOrg.id, {
+   318→          name: data.name.trim(),
+   319→          sku: data.sku?.trim() || undefined,
+   320→          description: data.description?.trim() || undefined,
+   321→          imageUrl: imagePreview || product?.imageUrl || undefined,
+   322→          costPrice,
+   323→          sellingPrice,
+   324→          lowStockThreshold,
+   325→          attributeValues: attrVals,
+   326→        })
+   327→        // Write to local DB on success
+   328→        try { await db.products.put(mapToLocalProduct(result.product)) } catch {}
+   329→        toast.success('Product updated successfully')
+   330→      } else {
+   331→        const result = await api.createProduct(currentOrg.id, {
+   332→          productTypeId,
+   333→          name: data.name.trim(),
+   334→          sku: data.sku?.trim() || undefined,
+   335→          description: data.description?.trim() || undefined,
+   336→          imageUrl: imagePreview || undefined,
+   337→          quantity,
+   338→          costPrice,
+   339→          sellingPrice,
+   340→          lowStockThreshold,
+   341→          attributeValues: attrVals,
+   342→          shopId: currentShop?.id,
+   343→        })
+   344→        // Write to local DB on success
+   345→        try { await db.products.put(mapToLocalProduct(result.product)) } catch {}
+   346→        toast.success('Product created successfully')
+   347→      }
+   348→
+   349→      onOpenChange(false)
+   350→      onSaved()
+   351→    } catch (error) {
+   352→      // If offline, queue the mutation optimistically via the local repo
+   353→      if (!navigator.onLine) {
+   354→        try {
+   355→          const localProductData = {
+   356→            productTypeId,
+   357→            organizationId: currentOrg.id,
+   358→            shopId: currentShop?.id ?? null,
+   359→            name: data.name.trim(),
+   360→            sku: data.sku?.trim() || null,
+   361→            description: data.description?.trim() || null,
+   362→            imageUrl: imagePreview || product?.imageUrl || null,
+   363→            quantity,
+   364→            costPrice,
+   365→            sellingPrice,
+   366→            lowStockThreshold,
+   367→            isActive: true,
+   368→          } as Omit<LocalProduct, 'id' | 'createdAt' | 'updatedAt'>
+   369→
+   370→          if (isEditing && product) {
+   371→            await productRepo.update(product.id, {
+   372→              ...localProductData,
+   373→            } as Partial<LocalProduct>)
+   374→            toast.success('Product updated (will sync when online)')
+   375→          } else {
+   376→            await productRepo.create(localProductData)
+   377→            toast.success('Product saved (will sync when online)')
+   378→          }
+   379→
+   380→          onOpenChange(false)
+   381→          onSaved()
+   382→        } catch {
+   383→          toast.error(getNetworkErrorMessage(error))
+   384→        }
+   385→      } else {
+   386→        toast.error(getNetworkErrorMessage(error))
+   387→      }
+   388→    } finally {
+   389→      setSaving(false)
+   390→    }
+   391→  }
+   392→
+   393→  const handleSaveClick = async () => {
+   394→    // First validate attributes manually
+   395→    const missingRequired = typeAttributes
+   396→      .filter((a) => a.required)
+   397→      .filter((a) => !attributeValues[a.id] || attributeValues[a.id].trim() === '')
+   398→    if (missingRequired.length > 0) {
+   399→      const errors: Record<string, string> = {}
+   400→      missingRequired.forEach((a) => {
+   401→        errors[`attr_${a.id}`] = `${a.name} is required`
+   402→      })
+   403→      setAttrErrors(errors)
+   404→      return
+   405→    }
+   406→
+   407→    // Ensure productTypeId is set in form before validation
+   408→    if (selectedTypeId) {
+   409→      form.setValue('productTypeId', selectedTypeId, { shouldValidate: true, shouldDirty: true })
+   410→    }
+   411→
+   412→    // Validate all form fields including productTypeId
+   413→    const isValid = await form.trigger(['productTypeId', 'name', 'costPrice', 'sellingPrice', 'lowStockThreshold', 'quantity'])
+   414→    if (!isValid) return
+   415→
+   416→    // Final check: ensure we have a productTypeId
+   417→    if (!selectedTypeId && !form.getValues('productTypeId')) {
+   418→      toast.error('Please select a product type')
+   419→      return
+   420→    }
+   421→
+   422→    const data = form.getValues()
+   423→    onSubmit(data)
+   424→  }
+   425→
+   426→  return (
+   427→    <Dialog open={open} onOpenChange={onOpenChange}>
+   428→      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto w-[calc(100%-2rem)] sm:w-full">
+   429→        <DialogHeader>
+   430→          <DialogTitle>{isEditing ? 'Edit Product' : 'Add Product'}</DialogTitle>
+   431→          <DialogDescription>Fill in the product details below.</DialogDescription>
+   432→        </DialogHeader>
+   433→
+   434→        <Form {...form}>
+   435→          <div className="space-y-6">
+   436→            {/* Section 1: Product Type Selection */}
+   437→            <div className="space-y-2">
+   438→              {productTypes.length === 0 ? (
+   439→                <div className="text-center py-8 text-muted-foreground border border-dashed rounded-lg">
+   440→                  <Package className="size-8 mx-auto mb-2 opacity-50" />
+   441→                  <p className="text-sm">No product types available.</p>
+   442→                  <p className="text-xs mt-1">Create a product type first.</p>
+   443→                </div>
+   444→              ) : (
+   445→                <FormSelectField
+   446→                  name="productTypeId"
+   447→                  label="Product Type"
+   448→                  placeholder="Select a product type"
+   449→                  required
+   450→                  options={productTypes.map((pt) => ({
+   451→                    value: pt.id,
+   452→                    label: pt.name,
+   453→                    icon: pt.icon || '📦',
+   454→                  }))}
+   455→                  onValueChange={(value) => handleSelectType(value)}
+   456→                />
+   457→              )}
+   458→            </div>
+   459→
+   460→            {/* Section 2: Basic Information — shown only after a type is selected */}
+   461→            {activeTypeId && (
+   462→              <div className="space-y-2">
+   463→                <Label className="text-sm font-medium">Basic Information</Label>
+   464→                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   465→                  <FormInputField
+   466→                    name="name"
+   467→                    label="Product Name"
+   468→                    placeholder='e.g., Samsung 55" 4K Smart TV'
+   469→                    required
+   470→                    className="sm:col-span-2"
+   471→                  />
+   472→
+   473→                  <FormInputField
+   474→                    name="sku"
+   475→                    label="SKU"
+   476→                    placeholder="Auto-generated"
+   477→                    description="Auto-generated from product type. Edit to customize."
+   478→                  />
+   479→
+   480→                  <FormTextareaField
+   481→                    name="description"
+   482→                    label="Description"
+   483→                    placeholder="Product description..."
+   484→                    rows={2}
+   485→                  />
+   486→
+   487→                  <FormInputField
+   488→                    name="costPrice"
+   489→                    label="Cost Price (ETB)"
+   490→                    type="number"
+   491→                    step="0.01"
+   492→                    min="0.01"
+   493→                    placeholder="e.g. 5000"
+   494→                    required
+   495→                  />
+   496→
+   497→                  <FormInputField
+   498→                    name="sellingPrice"
+   499→                    label="Selling Price (ETB)"
+   500→                    type="number"
+   501→                    step="0.01"
+   502→                    min="0.01"
+   503→                    placeholder="e.g. 8000"
+   504→                    required
+   505→                  />
+   506→
+   507→                  <FormInputField
+   508→                    name="lowStockThreshold"
+   509→                    label="Low Stock Threshold"
+   510→                    type="number"
+   511→                    min="0"
+   512→                  />
+   513→
+   514→                  {!isEditing && (
+   515→                    <FormInputField
+   516→                      name="quantity"
+   517→                      label="Initial Quantity"
+   518→                      type="number"
+   519→                      min="0"
+   520→                    />
+   521→                  )}
+   522→                </div>
+   523→              </div>
+   524→            )}
+   525→
+   526→            {/* Section 3: Custom Attributes — shown only when type has attributes */}
+   527→            {activeTypeId && typeAttributes.length > 0 && (
+   528→              <div className="space-y-2">
+   529→                <Label className="text-sm font-medium">Custom Attributes</Label>
+   530→                <div className="space-y-4">
+   531→                  {typeAttributes.map((attr) => {
+   532→                    const options = parseAttributeOptions(attr.options)
+   533→                    return (
+   534→                      <div key={attr.id} className="space-y-2">
+   535→                        <Label className="flex items-center gap-1">
+   536→                          {attr.name}
+   537→                          {attr.required && <span className="text-destructive">*</span>}
+   538→                        </Label>
+   539→
+   540→                        {(attr.fieldType === 'text' || attr.fieldType === 'textarea') && (
+   541→                          <Input
+   542→                            placeholder={`Enter ${attr.name.toLowerCase()}`}
+   543→                            value={attributeValues[attr.id] || ''}
+   544→                            onChange={(e) => updateAttributeValue(attr.id, e.target.value)}
+   545→                          />
+   546→                        )}
+   547→
+   548→                        {attr.fieldType === 'number' && (
+   549→                          <Input
+   550→                            type="number"
+   551→                            step="any"
+   552→                            placeholder={`Enter ${attr.name.toLowerCase()}`}
+   553→                            value={attributeValues[attr.id] || ''}
+   554→                            onChange={(e) => updateAttributeValue(attr.id, e.target.value)}
+   555→                          />
+   556→                        )}
+   557→
+   558→                        {(attr.fieldType === 'boolean' || attr.fieldType === 'switch') && (
+   559→                          <div className="flex items-center gap-2">
+   560→                            <Switch
+   561→                              checked={attributeValues[attr.id] === 'true'}
+   562→                              onCheckedChange={(checked) =>
+   563→                                updateAttributeValue(attr.id, checked ? 'true' : 'false')
+   564→                              }
+   565→                            />
+   566→                            <span className="text-sm text-muted-foreground">
+   567→                              {attributeValues[attr.id] === 'true' ? 'Yes' : 'No'}
+   568→                            </span>
+   569→                          </div>
+   570→                        )}
+   571→
+   572→                        {attr.fieldType === 'select' && options && (
+   573→                          <Select
+   574→                            value={attributeValues[attr.id] || ''}
+   575→                            onValueChange={(v) => updateAttributeValue(attr.id, v)}
+   576→                          >
+   577→                            <SelectTrigger>
+   578→                              <SelectValue placeholder={`Select ${attr.name.toLowerCase()}`} />
+   579→                            </SelectTrigger>
+   580→                            <SelectContent>
+   581→                              {options.map((opt: string) => (
+   582→                                <SelectItem key={opt} value={opt}>
+   583→                                  {opt}
+   584→                                </SelectItem>
+   585→                              ))}
+   586→                            </SelectContent>
+   587→                          </Select>
+   588→                        )}
+   589→
+   590→                        {attr.fieldType === 'image' && (
+   591→                          <div className="space-y-2">
+   592→                            <div className="flex items-center gap-2">
+   593→                              <Button
+   594→                                type="button"
+   595→                                variant="outline"
+   596→                                size="sm"
+   597→                                className="gap-1"
+   598→                                onClick={() =>
+   599→                                  document.getElementById(`img-upload-${attr.id}`)?.click()
+   600→                                }
+   601→                              >
+   602→                                <Upload className="size-3.5" />
+   603→                                Upload Image
+   604→                              </Button>
+   605→                              {attributeValues[attr.id] && (
+   606→                                <Button
+   607→                                  type="button"
+   608→                                  variant="ghost"
+   609→                                  size="sm"
+   610→                                  onClick={() => {
+   611→                                    updateAttributeValue(attr.id, '')
+   612→                                    setImagePreview(null)
+   613→                                  }}
+   614→                                >
+   615→                                  <X className="size-3.5" />
+   616→                                </Button>
+   617→                              )}
+   618→                            </div>
+   619→                            <input
+   620→                              id={`img-upload-${attr.id}`}
+   621→                              type="file"
+   622→                              accept="image/*"
+   623→                              className="hidden"
+   624→                              onChange={handleImageUpload}
+   625→                            />
+   626→                            {(attributeValues[attr.id] || imagePreview) && (
+   627→                              <div className="size-20 rounded-lg border overflow-hidden">
+   628→                                <img
+   629→                                  src={attributeValues[attr.id] || imagePreview || ''}
+   630→                                  alt="Preview"
+   631→                                  className="size-full object-cover"
+   632→                                  loading="lazy"
+   633→                                />
+   634→                              </div>
+   635→                            )}
+   636→                          </div>
+   637→                        )}
+   638→
+   639→                        {attr.fieldType === 'date' && (
+   640→                          <Input
+   641→                            type="date"
+   642→                            value={attributeValues[attr.id] || ''}
+   643→                            onChange={(e) => updateAttributeValue(attr.id, e.target.value)}
+   644→                          />
+   645→                        )}
+   646→
+   647→                        {attrErrors[`attr_${attr.id}`] && (
+   648→                          <p className="text-sm text-destructive">{attrErrors[`attr_${attr.id}`]}</p>
+   649→                        )}
+   650→                      </div>
+   651→                    )
+   652→                  })}
+   653→                </div>
+   654→              </div>
+   655→            )}
+   656→          </div>
+   657→        </Form>
+   658→
+   659→        <DialogFooter>
+   660→          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving} type="button">
+   661→            Cancel
+   662→          </Button>
+   663→          <Button onClick={handleSaveClick} disabled={saving || !activeTypeId} type="button">
+   664→            {saving && <Loader2 className="size-4 animate-spin" />}
+   665→            {saving ? (isEditing ? 'Saving...' : 'Creating...') : (isEditing ? 'Save Changes' : 'Create Product')}
+   666→          </Button>
+   667→        </DialogFooter>
+   668→      </DialogContent>
+   669→    </Dialog>
+   670→  )
+   671→}
+   672→
+   673→// ============================================
+   674→// Product Detail View
+   675→// ============================================
+   676→function ProductDetailView({
+   677→  product,
+   678→  onClose,
+   679→  onEdit,
+   680→}: {
+   681→  product: Product & {
+   682→    stockMovements?: StockMovement[]
+   683→    productType?: {
+   684→      id: string
+   685→      name: string
+   686→      icon?: string | null
+   687→      attributes?: AttributeDefinition[]
+   688→    }
+   689→  }
+   690→  onClose: () => void
+   691→  onEdit: (product: Product) => void
+   692→}) {
+   693→  const { currentOrg, currentShop } = useAuthStore()
+   694→  const [adjusting, setAdjusting] = useState(false)
+   695→  const [adjustQty, setAdjustQty] = useState('')
+   696→  const [adjustType, setAdjustType] = useState<'in' | 'out'>('in')
+   697→  const [currentProduct, setCurrentProduct] = useState(product)
+   698→
+   699→  const stockStatus = getStockStatus(currentProduct.quantity, currentProduct.lowStockThreshold)
+   700→
+   701→  const handleStockAdjust = async () => {
+   702→    if (!currentOrg || !adjustQty) return
+   703→    const qty = parseInt(adjustQty)
+   704→    if (isNaN(qty) || qty <= 0) {
+   705→      toast.error('Please enter a valid quantity')
+   706→      return
+   707→    }
+   708→    setAdjusting(true)
+   709→    try {
+   710→      const result = await api.addStockMovement(currentOrg.id, {
+   711→        productId: currentProduct.id,
+   712→        type: adjustType,
+   713→        quantity: qty,
+   714→        reason: `${adjustType === 'in' ? 'Stock in' : 'Stock out'} (manual adjustment)`,
+   715→        shopId: currentShop?.id,
+   716→      })
+   717→      setCurrentProduct((prev) => ({
+   718→        ...prev,
+   719→        quantity: result.movement.newStock,
+   720→      }))
+   721→      setAdjustQty('')
+   722→      toast.success(`Stock ${adjustType === 'in' ? 'added' : 'removed'} successfully`)
+   723→    } catch (error) {
+   724→      toast.error(getNetworkErrorMessage(error))
+   725→    } finally {
+   726→      setAdjusting(false)
+   727→    }
+   728→  }
+   729→
+   730→  return (
+   731→    <div className="space-y-6">
+   732→      {/* Back button */}
+   733→      <Button variant="ghost" size="sm" onClick={onClose} className="gap-1">
+   734→        <ArrowLeft className="size-4" />
+   735→        Back to Products
+   736→      </Button>
+   737→
+   738→      {/* Product Header */}
+   739→      <div className="flex flex-col sm:flex-row gap-6">
+   740→        <div className="size-24 rounded-xl bg-primary/10 flex items-center justify-center text-2xl shrink-0">
+   741→          {currentProduct.imageUrl ? (
+   742→            <img
+   743→              src={currentProduct.imageUrl}
+   744→              alt={currentProduct.name}
+   745→              className="size-full rounded-xl object-cover"
+   746→              loading="lazy"
+   747→            />
+   748→          ) : (
+   749→            currentProduct.productType?.icon || '📦'
+   750→          )}
+   751→        </div>
+   752→        <div className="flex-1">
+   753→          <div className="flex items-start justify-between gap-4">
+   754→            <div>
+   755→              <h2 className="text-base font-semibold">{currentProduct.name}</h2>
+   756→              <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
+   757→                <span>{currentProduct.productType?.name}</span>
+   758→                {currentProduct.sku && (
+   759→                  <>
+   760→                    <span>•</span>
+   761→                    <span>SKU: {currentProduct.sku}</span>
+   762→                  </>
+   763→                )}
+   764→              </div>
+   765→            </div>
+   766→            <div className="flex gap-2">
+   767→              <Button
+   768→                variant="outline"
+   769→                size="sm"
+   770→                className="gap-1"
+   771→                onClick={() => onEdit(currentProduct)}
+   772→              >
+   773→                <Pencil className="size-3.5" />
+   774→                Edit
+   775→              </Button>
+   776→            </div>
+   777→          </div>
+   778→          {currentProduct.description && (
+   779→            <p className="text-muted-foreground mt-2 text-sm">{currentProduct.description}</p>
+   780→          )}
+   781→        </div>
+   782→      </div>
+   783→
+   784→      {/* Stats Cards */}
+   785→      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4">
+   786→        <Card>
+   787→          <CardContent className="p-4">
+   788→            <div className="text-sm text-muted-foreground">Current Stock</div>
+   789→            <div className="text-xl sm:text-2xl font-bold mt-1">{currentProduct.quantity}</div>
+   790→            <Badge variant={stockStatus.variant} className="mt-1 text-xs">
+   791→              {stockStatus.label}
+   792→            </Badge>
+   793→          </CardContent>
+   794→        </Card>
+   795→        <Card>
+   796→          <CardContent className="p-4">
+   797→            <div className="text-sm text-muted-foreground">Cost Price</div>
+   798→            <div className="text-xl sm:text-2xl font-bold mt-1">
+   799→              {formatETB(currentProduct.costPrice)}
+   800→            </div>
+   801→          </CardContent>
+   802→        </Card>
+   803→        <Card>
+   804→          <CardContent className="p-4">
+   805→            <div className="text-sm text-muted-foreground">Selling Price</div>
+   806→            <div className="text-xl sm:text-2xl font-bold mt-1">
+   807→              {formatETB(currentProduct.sellingPrice)}
+   808→            </div>
+   809→          </CardContent>
+   810→        </Card>
+   811→        <Card>
+   812→          <CardContent className="p-4">
+   813→            <div className="text-sm text-muted-foreground">Total Value</div>
+   814→            <div className="text-xl sm:text-2xl font-bold mt-1">
+   815→              {formatETB(currentProduct.quantity * currentProduct.sellingPrice)}
+   816→            </div>
+   817→          </CardContent>
+   818→        </Card>
+   819→      </div>
+   820→
+   821→      {/* Quick Stock Adjustment */}
+   822→      <Card>
+   823→        <CardHeader className="pb-3">
+   824→          <CardTitle className="text-sm font-semibold">Quick Stock Adjustment</CardTitle>
+   825→        </CardHeader>
+   826→        <CardContent>
+   827→          <div className="flex items-end gap-3 sm:gap-4 flex-wrap">
+   828→            <div className="space-y-1.5">
+   829→              <Label className="text-xs">Type</Label>
+   830→              <Select
+   831→                value={adjustType}
+   832→                onValueChange={(v) => setAdjustType(v as 'in' | 'out')}
+   833→              >
+   834→                <SelectTrigger className="w-28 h-9">
+   835→                  <SelectValue />
+   836→                </SelectTrigger>
+   837→                <SelectContent>
+   838→                  <SelectItem value="in">Stock In</SelectItem>
+   839→                  <SelectItem value="out">Stock Out</SelectItem>
+   840→                </SelectContent>
+   841→              </Select>
+   842→            </div>
+   843→            <div className="space-y-1.5">
+   844→              <Label className="text-xs">Quantity</Label>
+   845→              <Input
+   846→                type="number"
+   847→                min="1"
+   848→                placeholder="Qty"
+   849→                value={adjustQty}
+   850→                onChange={(e) => setAdjustQty(e.target.value)}
+   851→                className="w-24 h-9"
+   852→              />
+   853→            </div>
+   854→            <Button onClick={handleStockAdjust} disabled={adjusting} size="sm" className="h-9">
+   855→              {adjusting ? (
+   856→                <Loader2 className="size-4 animate-spin" />
+   857→              ) : (
+   858→                <ArrowUpDown className="size-4" />
+   859→              )}
+   860→              {adjusting ? 'Adjusting...' : 'Adjust'}
+   861→            </Button>
+   862→          </div>
+   863→        </CardContent>
+   864→      </Card>
+   865→
+   866→      {/* Dynamic Attributes */}
+   867→      {(currentProduct.attributeValues?.length || 0) > 0 && (
+   868→        <Card>
+   869→          <CardHeader className="pb-3">
+   870→            <CardTitle className="text-sm font-semibold">Attributes</CardTitle>
+   871→          </CardHeader>
+   872→          <CardContent>
+   873→            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+   874→              {currentProduct.attributeValues?.map((av) => (
+   875→                <div
+   876→                  key={av.id}
+   877→                  className="flex items-center justify-between p-2 rounded-lg bg-muted/50"
+   878→                >
+   879→                  <span className="text-sm text-muted-foreground">
+   880→                    {av.attributeDefinition?.name}
+   881→                  </span>
+   882→                  <span className="text-sm font-medium">
+   883→                    {av.attributeDefinition?.fieldType === 'boolean' || av.attributeDefinition?.fieldType === 'switch'
+   884→                      ? av.value === 'true'
+   885→                        ? 'Yes'
+   886→                        : 'No'
+   887→                      : av.attributeDefinition?.fieldType === 'image'
+   888→                      ? '📷 Image'
+   889→                      : av.value}
+   890→                  </span>
+   891→                </div>
+   892→              ))}
+   893→            </div>
+   894→          </CardContent>
+   895→        </Card>
+   896→      )}
+   897→
+   898→      {/* Stock Movements History */}
+   899→      {currentProduct.stockMovements && currentProduct.stockMovements.length > 0 && (
+   900→        <Card>
+   901→          <CardHeader className="pb-3">
+   902→            <CardTitle className="text-sm font-semibold">Stock History</CardTitle>
+   903→          </CardHeader>
+   904→          <CardContent>
+   905→            <div className="space-y-2 max-h-64 overflow-y-auto">
+   906→              {currentProduct.stockMovements.map((movement) => (
+   907→                <div
+   908→                  key={movement.id}
+   909→                  className="flex items-center justify-between p-2 rounded-lg bg-muted/50 text-sm"
+   910→                >
+   911→                  <div className="flex items-center gap-2">
+   912→                    <Badge
+   913→                      variant={
+   914→                        movement.type === 'in'
+   915→                          ? 'default'
+   916→                          : movement.type === 'out'
+   917→                          ? 'destructive'
+   918→                          : 'secondary'
+   919→                      }
+   920→                      className="text-xs"
+   921→                    >
+   922→                      {movement.type.toUpperCase()}
+   923→                    </Badge>
+   924→                    <span className="text-muted-foreground">
+   925→                      {movement.reason || 'No reason'}
+   926→                    </span>
+   927→                  </div>
+   928→                  <div className="flex items-center gap-3">
+   929→                    <span className="font-medium">
+   930→                      {movement.type === 'in' ? '+' : '-'}
+   931→                      {movement.quantity}
+   932→                    </span>
+   933→                    <span className="text-xs text-muted-foreground">
+   934→                      {formatDate(movement.createdAt)}
+   935→                    </span>
+   936→                  </div>
+   937→                </div>
+   938→              ))}
+   939→            </div>
+   940→          </CardContent>
+   941→        </Card>
+   942→      )}
+   943→    </div>
+   944→  )
+   945→}
+   946→
+   947→// ============================================
+   948→// Loading Skeletons
+   949→// ============================================
+   950→function ProductsLoadingSkeleton() {
+   951→  return (
+   952→    <div className="space-y-3">
+   953→      <div className="flex items-center gap-3">
+   954→        <Skeleton className="h-10 w-48" />
+   955→        <Skeleton className="h-10 w-40" />
+   956→      </div>
+   957→      {Array.from({ length: 5 }).map((_, i) => (
+   958→        <div key={i} className="flex items-center gap-4 p-3">
+   959→          <Skeleton className="size-10 rounded-lg" />
+   960→          <Skeleton className="h-4 w-32" />
+   961→          <Skeleton className="h-4 w-20" />
+   962→          <Skeleton className="h-4 w-20" />
+   963→          <Skeleton className="h-4 w-16" />
+   964→          <Skeleton className="h-5 w-16 rounded-full" />
+   965→        </div>
+   966→      ))}
+   967→    </div>
+   968→  )
+   969→}
+   970→
+   971→// ============================================
+   972→// Main Products Page
+   973→// ============================================
+   974→export function ProductsPage() {
+   975→  const { currentOrg, currentShop } = useAuthStore()
+   976→  const [products, setProducts] = useState<Product[]>([])
+   977→  const [productTypes, setProductTypes] = useState<ProductType[]>([])
+   978→  const [loading, setLoading] = useState(true)
+   979→  const { search, setSearch, debouncedSearch } = usePageSearch()
+   980→  const [filterType, setFilterType] = useState<string>('all')
+   981→  const [page, setPage] = useState(1)
+   982→  const [totalPages, setTotalPages] = useState(1)
+   983→  const [total, setTotal] = useState(0)
+   984→  const limit = 10
+   985→
+   986→  const [dialogOpen, setDialogOpen] = useState(false)
+   987→  const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+   988→  const [deleteTarget, setDeleteTarget] = useState<Product | null>(null)
+   989→  const [deleting, setDeleting] = useState(false)
+   990→
+   991→  // Barcode dialog state
+   992→  const [barcodeProduct, setBarcodeProduct] = useState<Product | null>(null)
+   993→  const [barcodeDialogOpen, setBarcodeDialogOpen] = useState(false)
+   994→
+   995→  // Bulk import dialog state
+   996→  const [importDialogOpen, setImportDialogOpen] = useState(false)
+   997→
+   998→  // Detail view state
+   999→  const [viewingProduct, setViewingProduct] = useState<
+  1000→    (Product & { stockMovements?: StockMovement[]; productType?: { id: string; name: string; icon?: string | null; attributes?: AttributeDefinition[] } }) | null
+  1001→  >(null)
+  1002→  const [loadingDetail, setLoadingDetail] = useState(false)
+  1003→  const [fetchError, setFetchError] = useState<string | null>(null)
+  1004→
+  1005→  const fetchProducts = useCallback(async () => {
+  1006→    if (!currentOrg) return
+  1007→    setLoading(true)
+  1008→    setFetchError(null)
+  1009→    try {
+  1010→      const data = await api.getProducts(currentOrg.id, {
+  1011→        productTypeId: filterType !== 'all' ? filterType : undefined,
+  1012→        search: debouncedSearch || undefined,
+  1013→        page,
+  1014→        limit,
+  1015→        shopId: currentShop?.id,
+  1016→      })
+  1017→      setProducts(data.products)
+  1018→      setTotalPages(data.pagination.totalPages)
+  1019→      setTotal(data.pagination.total)
+  1020→      // Update local cache for offline use
+  1021→      try {
+  1022→        await db.products.bulkPut(
+  1023→          data.products.map(p => ({
+  1024→            id: p.id,
+  1025→            productTypeId: p.productTypeId,
+  1026→            organizationId: p.organizationId,
+  1027→            shopId: (p as Record<string, unknown>).shopId as string | null ?? null,
+  1028→            sku: p.sku ?? null,
+  1029→            name: p.name,
+  1030→            description: p.description ?? null,
+  1031→            imageUrl: p.imageUrl ?? null,
+  1032→            quantity: p.quantity,
+  1033→            costPrice: p.costPrice,
+  1034→            sellingPrice: p.sellingPrice,
+  1035→            lowStockThreshold: p.lowStockThreshold,
+  1036→            isActive: p.isActive,
+  1037→            createdAt: p.createdAt,
+  1038→            updatedAt: p.updatedAt,
+  1039→          }) satisfies LocalProduct)
+  1040→        )
+  1041→      } catch {
+  1042→        // Local cache update is non-critical; ignore errors
+  1043→      }
+  1044→    } catch (error) {
+  1045→      // API call failed — fall back to local IndexedDB
+  1046→      try {
+  1047→        const localProducts = await productRepo.getAll(currentOrg.id, currentShop?.id)
+  1048→        // Apply client-side filters that the API would have handled
+  1049→        let filtered = localProducts
+  1050→        if (filterType !== 'all') {
+  1051→          filtered = filtered.filter(p => p.productTypeId === filterType)
+  1052→        }
+  1053→        if (debouncedSearch) {
+  1054→          const q = debouncedSearch.toLowerCase()
+  1055→          filtered = filtered.filter(p =>
+  1056→            p.name.toLowerCase().includes(q) || (p.sku && p.sku.toLowerCase().includes(q))
+  1057→          )
+  1058→        }
+  1059→        // Paginate locally
+  1060→        const start = (page - 1) * limit
+  1061→        const paginated = filtered.slice(start, start + limit)
+  1062→        setProducts(paginated as unknown as Product[])
+  1063→        setTotalPages(Math.max(1, Math.ceil(filtered.length / limit)))
+  1064→        setTotal(filtered.length)
+  1065→      } catch {
+  1066→        // Even local DB failed — show the original API error
+  1067→        setFetchError(getNetworkErrorMessage(error))
+  1068→      }
+  1069→    } finally {
+  1070→      setLoading(false)
+  1071→    }
+  1072→  }, [currentOrg, currentShop?.id, filterType, debouncedSearch, page, limit])
+  1073→
+  1074→  const fetchProductTypes = useCallback(async () => {
+  1075→    if (!currentOrg) return
+  1076→    try {
+  1077→      const data = await api.getProductTypes(currentOrg.id, currentShop?.id)
+  1078→      setProductTypes(data.productTypes)
+  1079→      // Update local cache for offline use
+  1080→      try {
+  1081→        await db.categories.bulkPut(
+  1082→          data.productTypes.map(pt => ({
+  1083→            id: pt.id,
+  1084→            organizationId: pt.organizationId,
+  1085→            name: pt.name,
+  1086→            icon: pt.icon ?? null,
+  1087→            createdAt: pt.createdAt,
+  1088→            updatedAt: pt.updatedAt,
+  1089→          }))
+  1090→        )
+  1091→      } catch {
+  1092→        // Local cache update is non-critical; ignore errors
+  1093→      }
+  1094→    } catch (error) {
+  1095→      // API call failed — fall back to local IndexedDB
+  1096→      console.warn('[ProductsPage] Failed to fetch product types, falling back to local:', error)
+  1097→      try {
+  1098→        const localCategories = await categoryRepo.getAll(currentOrg.id)
+  1099→        setProductTypes(localCategories as unknown as ProductType[])
+  1100→      } catch {
+  1101→        // Even local DB failed; log but don't crash the page
+  1102→        console.warn('[ProductsPage] Local fallback for product types also failed')
+  1103→      }
+  1104→    }
+  1105→  }, [currentOrg, currentShop?.id])
+  1106→
+  1107→  useEffect(() => {
+  1108→    fetchProducts()
+  1109→  }, [fetchProducts])
+  1110→
+  1111→  useEffect(() => {
+  1112→    fetchProductTypes()
+  1113→  }, [fetchProductTypes])
+  1114→
+  1115→  // Reset page when search/filter changes
+  1116→  useEffect(() => {
+  1117→    setPage(1)
+  1118→  }, [debouncedSearch, filterType])
+  1119→
+  1120→  const handleEdit = (product: Product) => {
+  1121→    setEditingProduct(product)
+  1122→    handleDialogClose(true)
+  1123→  }
+  1124→
+  1125→  const handleViewDetail = async (product: Product) => {
+  1126→    if (!currentOrg) return
+  1127→    setLoadingDetail(true)
+  1128→    try {
+  1129→      // Fetch detailed product with stock movements
+  1130→      const detailedProduct = await authFetch(`/api/products/${product.id}?orgId=${currentOrg.id}${currentShop ? `&shopId=${currentShop.id}` : ''}`)
+  1131→        .then((r) => r.json())
+  1132→      setViewingProduct(detailedProduct.product)
+  1133→    } catch {
+  1134→      // Fallback: show the product data we already have
+  1135→      setViewingProduct(product)
+  1136→    } finally {
+  1137→      setLoadingDetail(false)
+  1138→    }
+  1139→  }
+  1140→
+  1141→  const handleDelete = async () => {
+  1142→    if (!currentOrg || !deleteTarget) return
+  1143→    setDeleting(true)
+  1144→    try {
+  1145→      await api.deleteProduct(deleteTarget.id, currentOrg.id)
+  1146→      // Remove from local DB on success
+  1147→      try { await db.products.delete(deleteTarget.id) } catch {}
+  1148→      toast.success('Product deleted')
+  1149→      setDeleteTarget(null)
+  1150→      fetchProducts()
+  1151→    } catch (error) {
+  1152→      // If offline, delete optimistically via local repo (queues outbox entry)
+  1153→      if (!navigator.onLine) {
+  1154→        try {
+  1155→          await productRepo.remove(deleteTarget.id)
+  1156→          toast.success('Product deleted (will sync when online)')
+  1157→          setDeleteTarget(null)
+  1158→          fetchProducts()
+  1159→        } catch {
+  1160→          toast.error(getNetworkErrorMessage(error))
+  1161→        }
+  1162→      } else {
+  1163→        toast.error(getNetworkErrorMessage(error))
+  1164→      }
+  1165→    } finally {
+  1166→      setDeleting(false)
+  1167→    }
+  1168→  }
+  1169→
+  1170→  const handleDialogClose = (open: boolean) => {
+  1171→    setDialogOpen(open)
+  1172→    if (!open) {
+  1173→      setEditingProduct(null)
+  1174→    } else {
+  1175→      // Re-fetch product types when dialog opens to ensure we have the latest
+  1176→      // (user may have created types on the Product Types page)
+  1177→      fetchProductTypes()
+  1178→    }
+  1179→  }
+  1180→
+  1181→  // If viewing a product detail, show the detail view
+  1182→  if (viewingProduct) {
+  1183→    return (
+  1184→      <ProductDetailView
+  1185→        product={viewingProduct}
+  1186→        onClose={() => setViewingProduct(null)}
+  1187→        onEdit={(product) => {
+  1188→          setViewingProduct(null)
+  1189→          handleEdit(product)
+  1190→        }}
+  1191→      />
+  1192→    )
+  1193→  }
+  1194→
+  1195→  return (
+  1196→    <div className="space-y-6">
+  1197→      {/* Header */}
+  1198→      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+  1199→        <div>
+  1200→          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Products</h1>
+  1201→          <p className="text-muted-foreground text-sm mt-1">
+  1202→            Manage your product catalog • {total} product{total !== 1 ? 's' : ''}
+  1203→          </p>
+  1204→        </div>
+  1205→        <div className="flex items-center gap-2">
+  1206→          <Button
+  1207→            variant="outline"
+  1208→            onClick={() => setImportDialogOpen(true)}
+  1209→            className="gap-2"
+  1210→          >
+  1211→            <FileDown className="size-4" />
+  1212→            Import CSV
+  1213→          </Button>
+  1214→          <Button
+  1215→            onClick={() => {
+  1216→              setEditingProduct(null)
+  1217→              handleDialogClose(true)
+  1218→            }}
+  1219→            className="gap-2"
+  1220→          >
+  1221→            <Plus className="size-4" />
+  1222→            Add Product
+  1223→          </Button>
+  1224→        </div>
+  1225→      </div>
+  1226→
+  1227→      {/* Filters */}
+  1228→      <div className="flex flex-col sm:flex-row gap-3">
+  1229→        <div className="relative flex-1 w-full sm:max-w-sm">
+  1230→          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+  1231→          <Input
+  1232→            placeholder="Search by name or SKU..."
+  1233→            aria-label="Search products"
+  1234→            value={search}
+  1235→            onChange={(e) => setSearch(e.target.value)}
+  1236→            className="pl-9"
+  1237→          />
+  1238→        </div>
+  1239→        <Select value={filterType} onValueChange={setFilterType}>
+  1240→          <SelectTrigger className="w-full sm:w-48">
+  1241→            <SelectValue placeholder="Filter by type" />
+  1242→          </SelectTrigger>
+  1243→          <SelectContent>
+  1244→            <SelectItem value="all">All Types</SelectItem>
+  1245→            {productTypes.map((pt) => (
+  1246→              <SelectItem key={pt.id} value={pt.id}>
+  1247→                {pt.icon || '📦'} {pt.name}
+  1248→              </SelectItem>
+  1249→            ))}
+  1250→          </SelectContent>
+  1251→        </Select>
+  1252→      </div>
+  1253→
+  1254→      {/* Products Table */}
+  1255→      {loading ? (
+  1256→        <ProductsLoadingSkeleton />
+  1257→      ) : fetchError ? (
+  1258→        <ErrorState title="Failed to load products" message={fetchError} onRetry={fetchProducts} />
+  1259→      ) : products.length === 0 ? (
+  1260→        <EmptyState
+  1261→          title={search || filterType !== 'all' ? 'No matching products' : 'No products yet'}
+  1262→          message={search || filterType !== 'all'
+  1263→            ? 'Try adjusting your search or filter.'
+  1264→            : 'Add your first product to start managing your inventory.'}
+  1265→          icon={<Package className="size-7 text-muted-foreground" />}
+  1266→          action={!search && filterType === 'all' ? {
+  1267→            label: 'Add Product',
+  1268→            onClick: () => {
+  1269→              setEditingProduct(null)
+  1270→              handleDialogClose(true)
+  1271→            },
+  1272→          } : undefined}
+  1273→        />
+  1274→      ) : (
+  1275→        <>
+  1276→          {/* Desktop Table */}
+  1277→          <div className="hidden md:block rounded-lg border overflow-x-auto">
+  1278→            <Table>
+  1279→              <TableHeader>
+  1280→                <TableRow>
+  1281→                  <TableHead className="w-12">Image</TableHead>
+  1282→                  <TableHead>Name</TableHead>
+  1283→                  <TableHead>SKU</TableHead>
+  1284→                  <TableHead>Type</TableHead>
+  1285→                  <TableHead className="text-right">Price</TableHead>
+  1286→                  <TableHead className="text-right">Stock</TableHead>
+  1287→                  <TableHead>Status</TableHead>
+  1288→                  <TableHead className="w-12"></TableHead>
+  1289→                </TableRow>
+  1290→              </TableHeader>
+  1291→              <TableBody>
+  1292→                {products.map((product) => {
+  1293→                  const stockStatus = getStockStatus(
+  1294→                    product.quantity,
+  1295→                    product.lowStockThreshold
+  1296→                  )
+  1297→                  return (
+  1298→                    <TableRow
+  1299→                      key={product.id}
+  1300→                      className="cursor-pointer"
+  1301→                      onClick={() => handleViewDetail(product)}
+  1302→                    >
+  1303→                      <TableCell>
+  1304→                        <div className="size-10 rounded-lg bg-muted flex items-center justify-center text-lg overflow-hidden">
+  1305→                          {product.imageUrl ? (
+  1306→                            <img
+  1307→                              src={product.imageUrl}
+  1308→                              alt={product.name}
+  1309→                              className="size-full object-cover"
+  1310→                              loading="lazy"
+  1311→                            />
+  1312→                          ) : (
+  1313→                            product.productType?.icon || '📦'
+  1314→                          )}
+  1315→                        </div>
+  1316→                      </TableCell>
+  1317→                      <TableCell className="font-medium">{product.name}</TableCell>
+  1318→                      <TableCell className="text-muted-foreground">
+  1319→                        {product.sku || '—'}
+  1320→                      </TableCell>
+  1321→                      <TableCell>
+  1322→                        <Badge variant="outline" className="text-xs font-normal">
+  1323→                          {product.productType?.icon && (
+  1324→                            <span className="mr-1">{product.productType.icon}</span>
+  1325→                          )}
+  1326→                          {product.productType?.name || 'Unknown'}
+  1327→                        </Badge>
+  1328→                      </TableCell>
+  1329→                      <TableCell className="text-right">
+  1330→                        {formatETB(product.sellingPrice)}
+  1331→                      </TableCell>
+  1332→                      <TableCell className="text-right font-medium">
+  1333→                        {product.quantity}
+  1334→                      </TableCell>
+  1335→                      <TableCell>
+  1336→                        <Badge variant={stockStatus.variant} className="text-xs">
+  1337→                          {stockStatus.label}
+  1338→                        </Badge>
+  1339→                      </TableCell>
+  1340→                      <TableCell>
+  1341→                        <DropdownMenu>
+  1342→                          <DropdownMenuTrigger asChild>
+  1343→                            <Button
+  1344→                              variant="ghost"
+  1345→                              size="icon"
+  1346→                              className="size-8 h-9 w-9 sm:h-8 sm:w-8"
+  1347→                              onClick={(e) => e.stopPropagation()}
+  1348→                              aria-label={`Actions for ${product.name}`}
+  1349→                            >
+  1350→                              <MoreHorizontal className="size-4" />
+  1351→                            </Button>
+  1352→                          </DropdownMenuTrigger>
+  1353→                          <DropdownMenuContent align="end">
+  1354→                            <DropdownMenuItem
+  1355→                              onClick={(e) => {
+  1356→                                e.stopPropagation()
+  1357→                                handleViewDetail(product)
+  1358→                              }}
+  1359→                            >
+  1360→                              <Eye className="size-4 mr-2" />
+  1361→                              View Details
+  1362→                            </DropdownMenuItem>
+  1363→                            <DropdownMenuItem
+  1364→                              onClick={(e) => {
+  1365→                                e.stopPropagation()
+  1366→                                setBarcodeProduct(product)
+  1367→                                setBarcodeDialogOpen(true)
+  1368→                              }}
+  1369→                            >
+  1370→                              <QrCode className="size-4 mr-2" />
+  1371→                              Barcode / QR Code
+  1372→                            </DropdownMenuItem>
+  1373→                            <DropdownMenuItem
+  1374→                              onClick={(e) => {
+  1375→                                e.stopPropagation()
+  1376→                                handleEdit(product)
+  1377→                              }}
+  1378→                            >
+  1379→                              <Pencil className="size-4 mr-2" />
+  1380→                              Edit
+  1381→                            </DropdownMenuItem>
+  1382→                            <DropdownMenuItem
+  1383→                              onClick={(e) => {
+  1384→                                e.stopPropagation()
+  1385→                                setDeleteTarget(product)
+  1386→                              }}
+  1387→                              className="text-destructive focus:text-destructive"
+  1388→                            >
+  1389→                              <Trash2 className="size-4 mr-2" />
+  1390→                              Delete
+  1391→                            </DropdownMenuItem>
+  1392→                          </DropdownMenuContent>
+  1393→                        </DropdownMenu>
+  1394→                      </TableCell>
+  1395→                    </TableRow>
+  1396→                  )
+  1397→                })}
+  1398→              </TableBody>
+  1399→            </Table>
+  1400→          </div>
+  1401→
+  1402→          {/* Mobile Card View */}
+  1403→          <div className="md:hidden space-y-3">
+  1404→            {products.map((product) => {
+  1405→              const stockStatus = getStockStatus(product.quantity, product.lowStockThreshold)
+  1406→              return (
+  1407→                <Card
+  1408→                  key={product.id}
+  1409→                  className="cursor-pointer hover:shadow-md transition-shadow"
+  1410→                  onClick={() => handleViewDetail(product)}
+  1411→                >
+  1412→                  <CardContent className="p-4">
+  1413→                    <div className="flex items-start gap-3">
+  1414→                      <div className="size-12 rounded-lg bg-muted flex items-center justify-center text-xl shrink-0 overflow-hidden">
+  1415→                        {product.imageUrl ? (
+  1416→                          <img
+  1417→                            src={product.imageUrl}
+  1418→                            alt={product.name}
+  1419→                            className="size-full object-cover"
+  1420→                            loading="lazy"
+  1421→                          />
+  1422→                        ) : (
+  1423→                          product.productType?.icon || '📦'
+  1424→                        )}
+  1425→                      </div>
+  1426→                      <div className="flex-1 min-w-0">
+  1427→                        <div className="font-medium truncate">{product.name}</div>
+  1428→                        <div className="text-xs text-muted-foreground mt-0.5">
+  1429→                          {product.productType?.name}
+  1430→                          {product.sku ? ` • ${product.sku}` : ''}
+  1431→                        </div>
+  1432→                        <div className="flex items-center justify-between mt-2">
+  1433→                          <span className="text-sm font-semibold">
+  1434→                            {formatETB(product.sellingPrice)}
+  1435→                          </span>
+  1436→                          <Badge variant={stockStatus.variant} className="text-xs">
+  1437→                            {product.quantity} in stock
+  1438→                          </Badge>
+  1439→                        </div>
+  1440→                      </div>
+  1441→                    </div>
+  1442→                  </CardContent>
+  1443→                </Card>
+  1444→              )
+  1445→            })}
+  1446→          </div>
+  1447→
+  1448→          {/* Pagination */}
+  1449→          {totalPages > 1 && (
+  1450→            <div className="flex items-center justify-between">
+  1451→              <p className="text-sm text-muted-foreground">
+  1452→                Page {page} of {totalPages} • {total} results
+  1453→              </p>
+  1454→              <div className="flex gap-2">
+  1455→                <Button
+  1456→                  variant="outline"
+  1457→                  size="sm"
+  1458→                  onClick={() => setPage(Math.max(1, page - 1))}
+  1459→                  disabled={page === 1}
+  1460→                >
+  1461→                  <ChevronLeft className="size-4" />
+  1462→                  Previous
+  1463→                </Button>
+  1464→                <Button
+  1465→                  variant="outline"
+  1466→                  size="sm"
+  1467→                  onClick={() => setPage(Math.min(totalPages, page + 1))}
+  1468→                  disabled={page === totalPages}
+  1469→                >
+  1470→                  Next
+  1471→                  <ChevronRight className="size-4" />
+  1472→                </Button>
+  1473→              </div>
+  1474→            </div>
+  1475→          )}
+  1476→        </>
+  1477→      )}
+  1478→
+  1479→      {/* Barcode/QR Dialog */}
+  1480→      <BarcodeDialog
+  1481→        open={barcodeDialogOpen}
+  1482→        onOpenChange={setBarcodeDialogOpen}
+  1483→        product={barcodeProduct}
+  1484→      />
+  1485→
+  1486→      {/* Bulk Import Dialog */}
+  1487→      <BulkImportDialog
+  1488→        open={importDialogOpen}
+  1489→        onOpenChange={setImportDialogOpen}
+  1490→        productTypes={productTypes}
+  1491→        onImportComplete={fetchProducts}
+  1492→      />
+  1493→
+  1494→      {/* Create/Edit Dialog — key forces fresh mount for add vs edit */}
+  1495→      <ProductDialog
+  1496→        key={editingProduct ? `edit-${editingProduct.id}` : 'add-new'}
+  1497→        open={dialogOpen}
+  1498→        onOpenChange={handleDialogClose}
+  1499→        product={editingProduct}
+  1500→        productTypes={productTypes}
+  1501→        onSaved={fetchProducts}
+  1502→      />
+  1503→
+  1504→      {/* Delete Confirmation */}
+  1505→      <AlertDialog
+  1506→        open={!!deleteTarget}
+  1507→        onOpenChange={(open) => !open && setDeleteTarget(null)}
+  1508→      >
+  1509→        <AlertDialogContent>
+  1510→          <AlertDialogHeader>
+  1511→            <AlertDialogTitle>Delete Product</AlertDialogTitle>
+  1512→            <AlertDialogDescription>
+  1513→              Are you sure you want to delete <strong>&quot;{deleteTarget?.name}&quot;</strong>?
+  1514→              This action cannot be undone. The product and all its data will be permanently deleted,
+  1515→              including stock history and attribute values.
+  1516→            </AlertDialogDescription>
+  1517→          </AlertDialogHeader>
+  1518→          <AlertDialogFooter>
+  1519→            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+  1520→            <AlertDialogAction
+  1521→              onClick={handleDelete}
+  1522→              disabled={deleting}
+  1523→              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+  1524→            >
+  1525→              {deleting && <Loader2 className="size-4 animate-spin" />}
+  1526→              {deleting ? 'Deleting...' : 'Delete'}
+  1527→            </AlertDialogAction>
+  1528→          </AlertDialogFooter>
+  1529→        </AlertDialogContent>
+  1530→      </AlertDialog>
+  1531→    </div>
+  1532→  )
+  1533→}

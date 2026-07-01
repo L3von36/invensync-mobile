@@ -52,17 +52,26 @@ class _InvenSyncAppState extends ConsumerState<InvenSyncApp> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  width: 80,
-                  height: 80,
+                  width: 72,
+                  height: 72,
                   decoration: BoxDecoration(
                     color: AppTheme.primaryColor,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: AppTheme.shadowPrimary,
                   ),
                   child: const Icon(Icons.inventory_2_outlined,
-                      size: 40, color: Colors.white),
+                      size: 36, color: Colors.white),
                 ),
+                const SizedBox(height: 20),
+                Text('InvenSync', style: AppTheme.heading2.copyWith(fontSize: 22)),
                 const SizedBox(height: 24),
-                const CircularProgressIndicator(),
+                SizedBox(
+                  width: 28, height: 28,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: AppTheme.primaryColor,
+                  ),
+                ),
               ],
             ),
           ),

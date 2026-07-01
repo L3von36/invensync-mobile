@@ -1,33 +1,45 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/data_providers.dart';
+import '../config/theme.dart';
 
-class OfflineBanner extends ConsumerWidget {
-  final Widget child;
-  const OfflineBanner({super.key, required this.child});
+class OfflineBanner extends StatelessWidget {
+  const OfflineBanner({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isOnline = ref.watch(isOnlineProvider);
+  Widget build(BuildContext context) {
+    final isDark = AppTheme.isDark(context);
 
-    return Column(
-      children: [
-        if (isOnline.valueOrNull == false)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            color: const Color(0xFF6B7280),
-            child: const Row(
-              children: [
-                Icon(Icons.wifi_off, color: Colors.white, size: 16),
-                SizedBox(width: 8),
-                Text('You are offline. Changes will sync when reconnected.',
-                    style: TextStyle(color: Colors.white, fontSize: 13)),
-              ],
+    return Container(
+      margin: const EdgeInsets.only(right: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      decoration: BoxDecoration(
+        color: isDark
+            ? AppTheme.warningColor.withValues(alpha: 0.15)
+            : AppTheme.warningBg,
+        borderRadius: BorderRadius.circular(20),
+        border: isDark
+            ? null
+            : Border.all(
+                color: AppTheme.warningColor.withValues(alpha: 0.30),
+                width: 1,
+              ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.wifi_off_rounded,
+            size: 14,
+            color: isDark ? AppTheme.warningColor : AppTheme.warningText,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            'Offline',
+            style: AppTheme.caption.copyWith(
+              color: isDark ? AppTheme.warningColor : AppTheme.warningText,
             ),
           ),
-        Expanded(child: child),
-      ],
+        ],
+      ),
     );
   }
 }

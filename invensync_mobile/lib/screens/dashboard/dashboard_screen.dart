@@ -1,371 +1,727 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:drift/drift.dart' hide Column;
 import '../../config/theme.dart';
-import '../../db/database.dart' hide User;
-import '../../utils/currency_formatter.dart';
-import '../../utils/date_formatter.dart';
 import '../../providers/data_providers.dart';
-
-extension ProductHelpers on Product {
-  bool get isLowStock => quantity > 0 && quantity <= lowStockThreshold;
-  bool get isOutOfStock => quantity <= 0;
-}
-
-extension SaleHelpers on Sale {
-  bool get isPaid => amountPaid >= total;
-}
+import '../../db/database.dart' hide User;
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
+  // ─────────────────────────────────────────────
+  // HELPERS
+  // ─────────────────────────────────────────────
+
+  String _formatCurrency(double amount) {
+    return 'ETB ${amount.toStringAsFixed(2)}';
+  }
+
+  String _relativeTime(String dateStr) {
+    try {
+      final date = DateTime.parse(dateStr);
+      final now = DateTime.now();
+      final diff = now.difference(date);
+      if (diff.inMinutes < 1) return 'Just now';
+      if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+      if (diff.inHours < 24) return '${diff.inHours}h ago';
+      if (diff.inDays == 1) return 'Yesterday';
+      if (diff.inDays < 7) return '${diff.inDays}d ago';
+      return '${date.day}/${date.month}/${date.year}';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  Color _statusColor(String status) {
+    switch (status) {
+      case 'completed':
+        return AppTheme.successColor;
+      case 'pending':
+        return AppTheme.warningColor;
+      case 'cancelled':
+        return AppTheme.errorColor;
+      default:
+        return AppTheme.mutedText;
+    }
+  }
+
+  Color _statusBg(String status, BuildContext context) {
+    final isDark = AppTheme.isDark(context);
+    switch (status) {
+      case 'completed':
+        return isDark
+            ? AppTheme.successColor.withValues(alpha: 0.15)
+            : AppTheme.successBg;
+      case 'pending':
+        return isDark
+            ? AppTheme.warningColor.withValues(alpha: 0.15)
+            : AppTheme.warningBg;
+      case 'cancelled':
+        return isDark
+            ? AppTheme.errorColor.withValues(alpha: 0.15)
+            : AppTheme.errorBg;
+      default:
+        return isDark
+            ? Colors.white.withValues(alpha: 0.08)
+            : const Color(0xFFF1F5F9);
+    }
+  }
+
+  Color _statusText(String status, BuildContext context) {
+    final isDark = AppTheme.isDark(context);
+    switch (status) {
+      case 'completed':
+        return isDark ? const Color(0xFF6EE7B7) : AppTheme.successText;
+      case 'pending':
+        return isDark ? const Color(0xFFFCD34D) : AppTheme.warningText;
+      case 'cancelled':
+        return isDark ? const Color(0xFFFCA5A5) : AppTheme.errorText;
+      default:
+        return AppTheme.mutedText;
+    }
+  }
+
+  String _formattedDate() {
+    final now = DateTime.now();
+    const weekdays = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ];
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    return '${weekdays[now.weekday - 1]}, ${months[now.month - 1]} ${now.day}, ${now.year}';
+  }
+
+  // ─────────────────────────────────────────────
+  // BUILD
+  // ─────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authStateProvider);
     final productsAsync = ref.watch(productsProvider);
     final salesAsync = ref.watch(recentSalesProvider);
-    final outboxCount = ref.watch(pendingOutboxCountProvider);
-    final isOnlineAsync = ref.watch(isOnlineProvider);
-    final isOnline = isOnlineAsync.valueOrNull ?? true;
+
+    final user = authState.valueOrNull?.user;
+    final products = productsAsync.valueOrNull ?? [];
+    final sales = salesAsync.valueOrNull ?? [];
+
+    final totalProducts = products.length;
+    final lowStockCount =
+        products.where((p) => p.quantity > 0 && p.quantity <= p.lowStockThreshold).length;
+    final outOfStock = products.where((p) => p.quantity <= 0).length;
+    final todayDate = DateTime.now().toIso8601String().substring(0, 10);
+    final todaySales = sales.where((s) => s.createdAt.startsWith(todayDate)).toList();
+    final todayRevenue =
+        todaySales.fold<double>(0, (sum, s) => sum + s.total);
+    final totalSales = sales.length;
 
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          // Offline banner
-          if (!isOnline)
-            SliverToBoxAdapter(
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                color: AppTheme.offlineColor,
-                child: const Row(
-                  children: [
-                    Icon(Icons.wifi_off, color: Colors.white, size: 18),
-                    SizedBox(width: 8),
-                    Text('Offline - changes will sync when connected',
-                        style: TextStyle(color: Colors.white, fontSize: 13)),
-                  ],
-                ),
+      body: RefreshIndicator(
+        onRefresh: () async {},
+        color: AppTheme.primaryColor,
+        backgroundColor: AppTheme.cardColor(context),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: AppTheme.pagePadding(context).copyWith(top: 20, bottom: 32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Header ──────────────────────────
+              _buildHeader(context, user?.name),
+              const SizedBox(height: 24),
+
+              // ── Revenue Card ────────────────────
+              _buildRevenueCard(context, todayRevenue, totalSales),
+              const SizedBox(height: 20),
+
+              // ── Stats Grid ──────────────────────
+              _buildStatsGrid(
+                context,
+                totalProducts: totalProducts,
+                lowStockCount: lowStockCount,
+                totalSales: totalSales,
+                outOfStock: outOfStock,
+              ),
+              const SizedBox(height: 28),
+
+              // ── Quick Actions ───────────────────
+              _buildQuickActionsSection(context),
+              const SizedBox(height: 28),
+
+              // ── Recent Sales ────────────────────
+              _buildRecentSalesSection(context, sales),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────
+  // HEADER
+  // ─────────────────────────────────────────────
+
+  Widget _buildHeader(BuildContext context, String? userName) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Dashboard',
+          style: AppTheme.heading1.copyWith(
+            color: AppTheme.textColor(context),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          userName != null ? 'Welcome back, $userName' : 'Welcome back',
+          style: AppTheme.bodySmall.copyWith(
+            color: AppTheme.mutedColor(context),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          _formattedDate(),
+          style: AppTheme.bodySmall.copyWith(
+            color: AppTheme.mutedColor(context).withValues(alpha: 0.7),
+            fontSize: 12,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ─────────────────────────────────────────────
+  // REVENUE CARD
+  // ─────────────────────────────────────────────
+
+  Widget _buildRevenueCard(
+    BuildContext context,
+    double revenue,
+    int salesCount,
+  ) {
+    final isDark = AppTheme.isDark(context);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+      decoration: BoxDecoration(
+        gradient: isDark
+            ? const LinearGradient(
+                colors: [Color(0xFF1E293B), Color(0xFF334155)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
+            : AppTheme.primaryGradient,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: AppTheme.shadowPrimary,
+      ),
+      child: Stack(
+        children: [
+          // Decorative circles
+          Positioned(
+            right: -20,
+            top: -20,
+            child: Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.04)
+                    : Colors.white.withValues(alpha: 0.15),
               ),
             ),
-
-          // Header
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Row(
+          ),
+          Positioned(
+            right: 30,
+            bottom: -30,
+            child: Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.03)
+                    : Colors.white.withValues(alpha: 0.1),
+              ),
+            ),
+          ),
+          // Content
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Today's Revenue",
+                style: AppTheme.bodySmall.copyWith(
+                  color: isDark
+                      ? const Color(0xFF94A3B8)
+                      : Colors.white.withValues(alpha: 0.85),
+                  fontWeight: FontWeight.w500,
+                  fontSize: 13,
+                  letterSpacing: 0.2,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _formatCurrency(revenue),
+                style: const TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  letterSpacing: -0.8,
+                  height: 1.2,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Dashboard',
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineSmall
-                                ?.copyWith(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 2),
-                        Text(_getGreeting(),
-                            style: TextStyle(
-                                color: Colors.grey.shade600, fontSize: 14)),
-                      ],
+                  Icon(
+                    Icons.receipt_long_rounded,
+                    size: 16,
+                    color: isDark
+                        ? const Color(0xFF94A3B8)
+                        : Colors.white.withValues(alpha: 0.7),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '$salesCount sale${salesCount != 1 ? 's' : ''} today',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: isDark
+                          ? const Color(0xFF94A3B8)
+                          : Colors.white.withValues(alpha: 0.75),
                     ),
                   ),
-                  // Sync status badge
-                  if (outboxCount.valueOrNull != null &&
-                      outboxCount.valueOrNull! > 0)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppTheme.warningColor,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        '${outboxCount.valueOrNull} pending',
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600),
-                      ),
-                    ),
                 ],
               ),
-            ),
+            ],
           ),
-
-          // Stats grid
-          SliverPadding(
-            padding: const EdgeInsets.all(16),
-            sliver: SliverGrid.count(
-              crossAxisCount: 2,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 1.1,
-              children: [
-                _StatCard(
-                  title: 'Products',
-                  value: productsAsync.valueOrNull?.length.toString() ?? '...',
-                  icon: Icons.inventory_2_outlined,
-                  color: AppTheme.primaryColor,
-                  subtitle: 'Total items',
-                ),
-                _StatCard(
-                  title: 'Today Sales',
-                  value: _calcTodayRevenue(salesAsync.valueOrNull),
-                  icon: Icons.point_of_sale_outlined,
-                  color: AppTheme.successColor,
-                  subtitle: 'Revenue',
-                ),
-                _StatCard(
-                  title: 'Low Stock',
-                  value: _countLowStock(productsAsync.valueOrNull).toString(),
-                  icon: Icons.warning_amber_outlined,
-                  color: AppTheme.warningColor,
-                  subtitle: 'Need attention',
-                ),
-                _StatCard(
-                  title: 'Transactions',
-                  value: salesAsync.valueOrNull?.length.toString() ?? '...',
-                  icon: Icons.receipt_long_outlined,
-                  color: Colors.purple,
-                  subtitle: 'Recent sales',
-                ),
-              ],
-            ),
-          ),
-
-          // Quick Actions
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text('Quick Actions',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w600)),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  _QuickAction(
-                    icon: Icons.add_shopping_cart_outlined,
-                    label: 'New Sale',
-                    color: AppTheme.successColor,
-                    onTap: () {},
-                  ),
-                  const SizedBox(width: 12),
-                  _QuickAction(
-                    icon: Icons.add_box_outlined,
-                    label: 'Add Product',
-                    color: AppTheme.primaryColor,
-                    onTap: () {},
-                  ),
-                  const SizedBox(width: 12),
-                  _QuickAction(
-                    icon: Icons.group_add_outlined,
-                    label: 'Add Customer',
-                    color: Colors.orange,
-                    onTap: () {},
-                  ),
-                  const SizedBox(width: 12),
-                  _QuickAction(
-                    icon: Icons.swap_vert_outlined,
-                    label: 'Stock In',
-                    color: Colors.teal,
-                    onTap: () {},
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Recent Sales
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Recent Sales',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w600)),
-                  TextButton(
-                    onPressed: () {},
-                    child: const Text('View All'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final sale = salesAsync.valueOrNull?[index];
-                if (sale == null) return const SizedBox.shrink();
-                return _SaleListTile(sale: sale);
-              },
-              childCount: salesAsync.valueOrNull?.length ?? 0,
-            ),
-          ),
-
-          // Bottom spacing
-          const SliverToBoxAdapter(child: SizedBox(height: 100)),
         ],
       ),
     );
   }
 
-  String _getGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good Morning';
-    if (hour < 17) return 'Good Afternoon';
-    return 'Good Evening';
-  }
+  // ─────────────────────────────────────────────
+  // STATS GRID
+  // ─────────────────────────────────────────────
 
-  String _calcTodayRevenue(List<Sale>? sales) {
-    if (sales == null || sales.isEmpty) return '0';
-    final today = DateTime.now().toIso8601String().substring(0, 10);
-    final todaySales = sales.where((s) => s.saleDate.startsWith(today));
-    final total = todaySales.fold<double>(0, (sum, s) => sum + s.total);
-    return CurrencyFormatter.compact(total);
-  }
-
-  int _countLowStock(List<Product>? products) {
-    if (products == null) return 0;
-    return products.where((p) => p.isLowStock || p.isOutOfStock).length;
-  }
-}
-
-class _StatCard extends StatelessWidget {
-  final String title, value, subtitle;
-  final IconData icon;
-  final Color color;
-
-  const _StatCard({
-    required this.title, required this.value, required this.subtitle,
-    required this.icon, required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(icon, color: color, size: 20),
-                ),
-              ],
-            ),
-            const Spacer(),
-            Text(value,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold, color: color)),
-            const SizedBox(height: 2),
-            Text(subtitle,
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-            Text(title,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w600)),
-          ],
+  Widget _buildStatsGrid(
+    BuildContext context, {
+    required int totalProducts,
+    required int lowStockCount,
+    required int totalSales,
+    required int outOfStock,
+  }) {
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
+      childAspectRatio: 1.8,
+      children: [
+        _buildStatCard(
+          context,
+          icon: Icons.inventory_2_outlined,
+          label: 'Total Products',
+          value: '$totalProducts',
+          iconBgColor: AppTheme.infoColor,
         ),
-      ),
+        _buildStatCard(
+          context,
+          icon: Icons.warning_amber_rounded,
+          label: 'Low Stock',
+          value: '$lowStockCount',
+          iconBgColor: AppTheme.warningColor,
+          subtitle: outOfStock > 0 ? '$outOfStock out of stock' : null,
+        ),
+        _buildStatCard(
+          context,
+          icon: Icons.shopping_bag_outlined,
+          label: 'Total Sales',
+          value: '$totalSales',
+          iconBgColor: AppTheme.successColor,
+        ),
+        _buildStatCard(
+          context,
+          icon: Icons.cancel_outlined,
+          label: 'Out of Stock',
+          value: '$outOfStock',
+          iconBgColor: AppTheme.errorColor,
+        ),
+      ],
     );
   }
-}
 
-class _QuickAction extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
+  Widget _buildStatCard(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color iconBgColor,
+    String? subtitle,
+  }) {
+    final isDark = AppTheme.isDark(context);
 
-  const _QuickAction({
-    required this.icon, required this.label,
-    required this.color, required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Material(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.cardColor(context),
+        borderRadius: BorderRadius.circular(AppTheme.cardRadiusSm),
+        border: Border.all(color: AppTheme.borderColor(context)),
+        boxShadow: AppTheme.shadowCard,
+      ),
+      child: Row(
+        children: [
+          Expanded(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, color: color, size: 24),
-                const SizedBox(height: 6),
-                Text(label,
-                    style: TextStyle(
-                        color: color,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600)),
+                Text(
+                  label,
+                  style: AppTheme.caption.copyWith(
+                    color: AppTheme.mutedColor(context),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: AppTheme.heading2.copyWith(
+                    color: AppTheme.textColor(context),
+                  ),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: AppTheme.caption.copyWith(
+                      color: AppTheme.errorColor,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
-        ),
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: isDark
+                  ? iconBgColor.withValues(alpha: 0.15)
+                  : iconBgColor.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, size: 20, color: iconBgColor),
+          ),
+        ],
       ),
     );
   }
-}
 
-class _SaleListTile extends StatelessWidget {
-  final Sale sale;
-  const _SaleListTile({required this.sale});
+  // ─────────────────────────────────────────────
+  // QUICK ACTIONS
+  // ─────────────────────────────────────────────
 
-  @override
-  Widget build(BuildContext context) {
-    final statusColor = sale.status == 'completed'
-        ? AppTheme.successColor
-        : sale.status == 'cancelled'
-            ? AppTheme.errorColor
-            : AppTheme.warningColor;
-
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: statusColor.withValues(alpha: 0.1),
-          child: Icon(Icons.receipt_outlined, color: statusColor, size: 18),
+  Widget _buildQuickActionsSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Quick Actions',
+          style: AppTheme.heading3.copyWith(
+            color: AppTheme.textColor(context),
+          ),
         ),
-        title: Text(sale.invoiceNumber,
-            style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: Text(
-            '${sale.customerName ?? 'Walk-in'} · ${DateFormatter.relative(sale.createdAt)}'),
-        trailing: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(CurrencyFormatter.format(sale.total),
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: statusColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(4),
+        const SizedBox(height: 14),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          clipBehavior: Clip.none,
+          child: Row(
+            children: [
+              _buildQuickAction(
+                context,
+                icon: Icons.receipt_long_rounded,
+                label: 'New Sale',
+                isPrimary: true,
               ),
-              child: Text(sale.status,
-                  style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.w600)),
+              const SizedBox(width: 12),
+              _buildQuickAction(
+                context,
+                icon: Icons.add_box_outlined,
+                label: 'Add Product',
+              ),
+              const SizedBox(width: 12),
+              _buildQuickAction(
+                context,
+                icon: Icons.person_add_outlined,
+                label: 'Add Customer',
+              ),
+              const SizedBox(width: 12),
+              _buildQuickAction(
+                context,
+                icon: Icons.inventory_outlined,
+                label: 'Stock In',
+              ),
+              const SizedBox(width: 4),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickAction(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    bool isPrimary = false,
+  }) {
+    final isDark = AppTheme.isDark(context);
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 64,
+          height: 64,
+          decoration: BoxDecoration(
+            color: isPrimary
+                ? AppTheme.primaryColor
+                : isDark
+                    ? const Color(0xFF334155)
+                    : AppTheme.surfaceLight,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: isPrimary ? AppTheme.shadowPrimary : AppTheme.shadowSm,
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () {},
+              child: Center(
+                child: Icon(
+                  icon,
+                  size: 26,
+                  color: isPrimary ? Colors.white : AppTheme.primaryColor,
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: 72,
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: AppTheme.caption.copyWith(
+              color: isPrimary
+                  ? AppTheme.primaryColor
+                  : AppTheme.mutedColor(context),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ─────────────────────────────────────────────
+  // RECENT SALES
+  // ─────────────────────────────────────────────
+
+  Widget _buildRecentSalesSection(BuildContext context, List<Sale> sales) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Recent Sales',
+              style: AppTheme.heading3.copyWith(
+                color: AppTheme.textColor(context),
+              ),
+            ),
+            TextButton(
+              onPressed: () {},
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(
+                'View All',
+                style: AppTheme.caption.copyWith(
+                  color: AppTheme.primaryColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (sales.isEmpty)
+          _buildEmptyState(
+            context,
+            icon: Icons.receipt_long_outlined,
+            title: 'No sales yet',
+            subtitle: 'Sales will appear here once you make transactions',
+          )
+        else
+          ...sales.take(5).map(
+            (sale) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _buildSaleCard(context, sale),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildSaleCard(BuildContext context, Sale sale) {
+    final status = sale.status;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.cardColor(context),
+        borderRadius: BorderRadius.circular(AppTheme.cardRadius),
+        border: Border.all(color: AppTheme.borderColor(context)),
+      ),
+      child: Row(
+        children: [
+          // Status dot
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              color: _statusColor(status),
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 14),
+          // Middle content
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      sale.invoiceNumber,
+                      style: AppTheme.caption.copyWith(
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'monospace',
+                        letterSpacing: -0.2,
+                        color: AppTheme.textColor(context),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2.5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _statusBg(status, context),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        status.toUpperCase(),
+                        style: AppTheme.overline.copyWith(
+                          color: _statusText(status, context),
+                          fontSize: 9,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  sale.customerName ?? 'Walk-in',
+                  style: AppTheme.bodyLarge.copyWith(
+                    color: AppTheme.textColor(context),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _relativeTime(sale.createdAt),
+                  style: AppTheme.bodySmall.copyWith(
+                    color: AppTheme.mutedColor(context),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Amount
+          Text(
+            _formatCurrency(sale.total),
+            style: AppTheme.heading3.copyWith(
+              color: AppTheme.textColor(context),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────
+  // EMPTY STATE
+  // ─────────────────────────────────────────────
+
+  Widget _buildEmptyState(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 48),
+      child: Center(
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              size: 56,
+              color: AppTheme.mutedColor(context).withValues(alpha: 0.3),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              style: AppTheme.bodyLarge.copyWith(
+                color: AppTheme.mutedColor(context),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              subtitle,
+              style: AppTheme.bodySmall.copyWith(
+                color: AppTheme.mutedColor(context).withValues(alpha: 0.6),
+              ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
