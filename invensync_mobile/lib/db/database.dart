@@ -1,8 +1,5 @@
-import 'dart:io';
 import 'package:drift/drift.dart';
-import 'package:drift/native.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as p;
+import 'connection/connection.dart';
 
 part 'database.g.dart';
 
@@ -286,7 +283,7 @@ class SyncMeta extends Table {
   Outbox, SyncMeta,
 ])
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(_openConnection());
+  AppDatabase() : super(openConnection());
 
   AppDatabase.forTesting(super.e);
 
@@ -511,10 +508,3 @@ class AppDatabase extends _$AppDatabase {
   }
 }
 
-LazyDatabase _openConnection() {
-  return LazyDatabase(() async {
-    final dbFolder = await getApplicationDocumentsDirectory();
-    final file = File(p.join(dbFolder.path, 'invensync.db'));
-    return NativeDatabase.createInBackground(file);
-  });
-}
