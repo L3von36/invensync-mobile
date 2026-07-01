@@ -6,6 +6,8 @@ import 'providers/data_providers.dart';
 import 'screens/login/login_screen.dart';
 import 'screens/main_shell.dart';
 
+final _demoModeProvider = StateProvider<bool>((ref) => false);
+
 void appMain() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const ProviderScope(child: InvenSyncApp()));
@@ -106,6 +108,10 @@ class _AuthWrapperState extends ConsumerState<_AuthWrapper> {
     return LoginScreen(
       onLoginSuccess: () {},
       on2FaRequired: (token) {},
+      onStartDemo: () async {
+        await ref.read(authStateProvider.notifier).startDemo();
+        ref.read(_demoModeProvider.notifier).state = true;
+      },
     );
   }
 }

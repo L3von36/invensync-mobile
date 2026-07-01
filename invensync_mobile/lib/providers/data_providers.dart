@@ -14,6 +14,7 @@ import '../sync/sync_engine.dart';
 import '../sync/connectivity_service.dart';
 import '../models/user.dart' as models;
 import '../models/organization.dart' as models;
+import '../utils/demo_seeder.dart';
 
 // ============================================
 // CORE SINGLETONS
@@ -120,6 +121,34 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthState>> {
         state = AsyncValue.error(
             Exception(result.message ?? '2FA failed'), StackTrace.current);
       }
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
+
+  Future<void> startDemo() async {
+    state = const AsyncValue.loading();
+    try {
+      final db = _ref.read(databaseProvider);
+      final tokenStorage = _ref.read(tokenStorageProvider);
+      final seeder = DemoSeeder(db, tokenStorage);
+      await seeder.seed();
+      state = AsyncValue.data(AuthState(
+        user: models.User(
+          id: 'demo-user-001',
+          email: 'demo@invensync.com',
+          name: 'Demo User',
+          role: 'admin',
+        ),
+        organization: models.Organization(
+          id: 'demo-org-001',
+          name: 'InvenSync Demo',
+          slug: 'invensync-demo',
+          role: 'admin',
+          currency: 'ETB',
+        ),
+        isBootstrapped: true,
+      ));
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }

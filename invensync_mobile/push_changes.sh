@@ -1,10 +1,11 @@
 #!/bin/bash
 cd /home/z/my-project/invensync_mobile
 git add -A
-git commit -m "Add Flutter web support with sql.js (Drift WebDatabase)
+git commit -m "Redesign login + add demo mode
 
-- Platform-conditional DB connection (NativeDatabase on mobile, WebDatabase on web)
-- Added sql.js CDN to index.html for in-browser SQLite
-- Updated SDK constraint to >=3.5.0 for broader compatibility
-- Deployed to GitHub Pages: https://l3von36.github.io/invensync-mobile/"
+- Split-layout login (branding panel + form) on wide screens
+- Animated fade+slide entrance
+- Fill Demo Credentials button (demo@invensync.com / demo1234)
+- Try Demo Mode button (no server needed, seeds 12 products, 5 customers, 5 sales)
+- Responsive design works on mobile and web" 2>&1
 git push 2>&1
